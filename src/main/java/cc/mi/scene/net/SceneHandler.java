@@ -1,11 +1,11 @@
-package cc.mi.scene.sceneClient;
+package cc.mi.scene.net;
 
 import cc.mi.core.coder.Coder;
 import cc.mi.scene.system.SystemManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-public class SceneClientHandler extends SimpleChannelInboundHandler<Coder> {
+public class SceneHandler extends SimpleChannelInboundHandler<Coder> {
 	
 	public void channelActive(final ChannelHandlerContext ctx) {
 		System.out.println("connect to center success");
