@@ -12,7 +12,7 @@ import cc.mi.core.task.SendToCenterTask;
 import cc.mi.core.task.base.Task;
 import io.netty.channel.Channel;
 
-public class SystemManager {
+public class SceneSystemManager {
 	// 单线程逻辑
 	private static final ExecutorService executor;
 	

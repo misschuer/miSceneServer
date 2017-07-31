@@ -1,7 +1,7 @@
 package cc.mi.scene.net;
 
 import cc.mi.core.coder.Coder;
-import cc.mi.scene.system.SystemManager;
+import cc.mi.scene.system.SceneSystemManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -9,8 +9,8 @@ public class SceneHandler extends SimpleChannelInboundHandler<Coder> {
 	
 	public void channelActive(final ChannelHandlerContext ctx) {
 		System.out.println("connect to center success");
-		SystemManager.setCenterChannel(ctx.channel());
-		SystemManager.regToCenter();
+		SceneSystemManager.setCenterChannel(ctx.channel());
+		SceneSystemManager.regToCenter();
 	}
 	
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
