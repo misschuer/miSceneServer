@@ -1,20 +1,16 @@
 package cc.mi.scene.net;
 
-import cc.mi.core.coder.Packet;
-import cc.mi.scene.system.SceneSystemManager;
+import cc.mi.core.handler.ChannelHandlerGenerator;
+import cc.mi.core.packet.Packet;
+import cc.mi.scene.server.SceneServerManager;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-public class SceneHandler extends SimpleChannelInboundHandler<Packet> {
+public class SceneHandler extends SimpleChannelInboundHandler<Packet> implements ChannelHandlerGenerator {
 	
 	public void channelActive(final ChannelHandlerContext ctx) {
-		System.out.println("connect to center success");
-		SceneSystemManager.setCenterChannel(ctx.channel());
-		SceneSystemManager.regToCenter();
-	}
-	
-	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-		
+		SceneServerManager.getInstance().onCenterConnected(ctx.channel());
 	}
 	
 	@Override
@@ -23,12 +19,17 @@ public class SceneHandler extends SimpleChannelInboundHandler<Packet> {
 	}
 	
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		System.out.println("scene client inactive");
+		SceneServerManager.getInstance().onCenterDisconnected(ctx.channel());
 		ctx.fireChannelInactive();
 	}
 
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
 		throwable.printStackTrace();
 		ctx.close();
+	}
+
+	@Override
+	public ChannelHandler newChannelHandler() {
+		return new SceneHandler();
 	}
 }

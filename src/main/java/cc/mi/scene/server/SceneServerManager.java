@@ -1,57 +1,19 @@
-package cc.mi.scene.system;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+package cc.mi.scene.server;
 
 import cc.mi.core.constance.IdentityConst;
-import cc.mi.core.generate.msg.ServerRegIdentity;
-import cc.mi.core.generate.msg.ServerRegOpcode;
-import cc.mi.core.task.SendToCenterTask;
-import cc.mi.core.task.base.Task;
-import io.netty.channel.Channel;
+import cc.mi.core.manager.ServerManager;
 
-public class SceneSystemManager {
-	// 单线程逻辑
-	private static final ExecutorService executor;
+public class SceneServerManager extends ServerManager {
+	private static SceneServerManager instance;
 	
-	private static Channel centerChannel = null;
-		
-	private static final List<Integer> opcodes;
-	
-	static {
-		executor = Executors.newSingleThreadExecutor();
-		opcodes = Arrays.asList(
-				
-		);
-	}
-	
-	public static Channel getCenterChannel() {
-		return centerChannel;
-	}
-	
-	public static void setCenterChannel(Channel channel) {
-		if (centerChannel == null || !centerChannel.isActive()) {
-			centerChannel = channel;
+	public static SceneServerManager getInstance() {
+		if (instance == null) {
+			instance = new SceneServerManager();
 		}
+		return instance;
 	}
 	
-	// 提交客户端过来的任务
-	public static void submitTask(Task task) {
-		executor.submit(task);
-	}
-	
-	public static void regToCenter() {
-//		ServerRegIdentity identity = new ServerRegIdentity();
-//		identity.setInternalDestFD(IdentityConst.SERVER_TYPE_CENTER);
-//		identity.setIdentity(IdentityConst.SERVER_TYPE_RECORD);
-//		submitTask(new SendToCenterTask(centerChannel, identity));
-//		
-//		ServerRegOpcode reg = new ServerRegOpcode();
-//		reg.setInternalDestFD(IdentityConst.SERVER_TYPE_CENTER);
-//		reg.setOpcodes(opcodes);
-//		submitTask(new SendToCenterTask(centerChannel, reg));
-		
+	public SceneServerManager() {
+		super(IdentityConst.SERVER_TYPE_SCENE);
 	}
 }
