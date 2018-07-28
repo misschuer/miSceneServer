@@ -31,9 +31,9 @@ public class SceneServerManager extends ServerManager {
 	private static final List<Integer> opcodes;
 	
 	// 帧刷新
-	private static final ScheduledExecutorService excutor = Executors.newScheduledThreadPool(1);
+	private final ScheduledExecutorService excutor = Executors.newScheduledThreadPool(1);
 	// 消息包队列
-	private static final Queue<Packet> packetQueue = new LinkedList<>();
+	private final Queue<Packet> packetQueue = new LinkedList<>();
 	// 当前帧刷新执行的代码逻辑
 	protected ServerProcessBlock process;
 	// 最后一次执行帧刷新的时间戳
