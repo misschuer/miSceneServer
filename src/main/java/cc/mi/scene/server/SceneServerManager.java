@@ -21,6 +21,7 @@ import cc.mi.core.manager.ServerManager;
 import cc.mi.core.packet.Packet;
 import cc.mi.core.utils.ServerProcessBlock;
 import cc.mi.scene.handler.BinlogDataModifyHandler;
+import cc.mi.scene.handler.CreateMapHandler;
 
 public class SceneServerManager extends ServerManager {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneServerManager.class);
@@ -43,6 +44,7 @@ public class SceneServerManager extends ServerManager {
 	
 	static {
 		handlers.put(Opcodes.MSG_BINLOGDATAMODIFY, new BinlogDataModifyHandler());
+		handlers.put(Opcodes.MSG_CREATEMAP, new CreateMapHandler());
 		
 		opcodes = new LinkedList<>();
 		opcodes.addAll(handlers.keySet());

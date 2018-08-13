@@ -17,6 +17,8 @@ public class ServerConfig {
 	private static String gate_ip;
 	private static int gate_port;
 	
+	public static final int LOOT_AREA = 1;
+	
 	public static void loadConfig() throws NumberFormatException, Exception {
 		Config cfg = new Config();
 		URL url = ServerConfig.class.getResource("/config.ini");
