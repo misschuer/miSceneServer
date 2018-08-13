@@ -1,12 +1,13 @@
 package cc.mi.scene.grid;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.callback.Callback;
+import cc.mi.core.generate.stru.BinlogInfo;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.ScenePlayer;
@@ -31,12 +32,23 @@ public class Grid {
 	// 相邻的grid
 	private final List<Grid> noticeGrid;
 
+	//更新块
+	protected List<BinlogInfo> updateBlocks;
+	//创建块
+	protected List<BinlogInfo> createBlocks;
+	//离开视野
+	protected List<BinlogInfo> outAreaBlocks;
+	//生物移动包
+	protected List<Object> elementMoveBlocks;
+	//生物跳跃包
+	protected List<Object> elementJumpBlocks;
+
 	//grid底下的战利品
 	protected final LootObject loot = new LootObject();
 	//玩家对象系列	
-	protected final Set<ScenePlayer> players = new HashSet<>();
+	protected final Map<String, ScenePlayer> players = new HashMap<>();
 	//生物对象系统
-	protected final List<SceneCreature> creatures = new ArrayList<>();
+	protected final Map<String, SceneCreature> creatures = new HashMap<>();
 	
 	public Grid(SceneMap inst, 
 			int index, int x, int y, 
@@ -58,15 +70,22 @@ public class Grid {
 	 * //对象更新
 	 */
 	public void objectAccess() {
-
+		
+		Grid self = this;
 		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
-
 			@Override
-			public void invoke(SceneElement value) {
+			public void invoke(SceneElement element) {
 //				if(wo->GetTypeId() == TYPEID_PLAYER)
 //					static_cast<Player*>(wo)->SyncUnitToPlayerData();
-//				//if(wo->BinlogEmpty())//没变化
-//				//	return;
+				BinlogInfo binlogInfo = element.packUpdateBinlogInfo(
+						GridManager.gridUpdate.getUpdateIntMask(),
+						GridManager.gridUpdate.getUpdateStrMask()
+				);
+				if (binlogInfo != null) {
+					self.addUpdateBlock(binlogInfo);
+					element.clear();
+				}
+				
 //				ByteArray *bytes = ObjMgr.GridMallocByteArray();
 //				if(wo->WriteUpdateBlock(*bytes, wo->GetUIntGuid(),gGridUpdateMask.update_int_mask_,gGridUpdateMask.update_string_mask_))
 //				{
@@ -80,11 +99,11 @@ public class Grid {
 			}
 		};
 		
-		for (SceneElement element : players) {
+		for (SceneElement element : players.values()) {
 			callback.invoke(element);
 		}
 		
-		for (SceneElement element : creatures) {
+		for (SceneElement element : creatures.values()) {
 			callback.invoke(element);
 		}
 
@@ -277,16 +296,16 @@ public class Grid {
 //		}
 	}
 	
-	public void addUpdateBlock() {
-		
+	public void addUpdateBlock(BinlogInfo binlogInfo) {
+		this.updateBlocks.add(binlogInfo);
 	}
 	
-	public void addCreateBlock() {
-		
+	public void addCreateBlock(BinlogInfo binlogInfo) {
+		this.createBlocks.add(binlogInfo);
 	}
 	
-	public void addOutArea() {
-		
+	public void addOutArea(BinlogInfo binlogInfo) {
+		this.outAreaBlocks.add(binlogInfo);
 	}
 	
 	public boolean isActive() {

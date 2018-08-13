@@ -185,6 +185,10 @@ public class SceneMap {
 		return true;
 	}
 
+	public GridManager getGridManager() {
+		return gridManager;
+	}
+
 //	void Map::Update(uint32 diff)
 //	{	
 //		ASSERT(m_grids);
