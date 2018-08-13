@@ -7,6 +7,7 @@ import java.util.Set;
 
 import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.callback.Callback;
+import cc.mi.core.generate.stru.BinlogInfo;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.ScenePlayer;
@@ -58,15 +59,22 @@ public class Grid {
 	 * //对象更新
 	 */
 	public void objectAccess() {
-
+		
+		Grid self = this;
 		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
-
 			@Override
-			public void invoke(SceneElement value) {
+			public void invoke(SceneElement element) {
 //				if(wo->GetTypeId() == TYPEID_PLAYER)
 //					static_cast<Player*>(wo)->SyncUnitToPlayerData();
 //				//if(wo->BinlogEmpty())//没变化
 //				//	return;
+				
+				BinlogInfo binlogInfo = element.packUpdateBinlogInfo();
+				if (binlogInfo != null) {
+					self.addUpdateBlock(binlogInfo);
+					element.clear();
+				}
+				
 //				ByteArray *bytes = ObjMgr.GridMallocByteArray();
 //				if(wo->WriteUpdateBlock(*bytes, wo->GetUIntGuid(),gGridUpdateMask.update_int_mask_,gGridUpdateMask.update_string_mask_))
 //				{
@@ -277,7 +285,7 @@ public class Grid {
 //		}
 	}
 	
-	public void addUpdateBlock() {
+	public void addUpdateBlock(BinlogInfo binlogInfo) {
 		
 	}
 	
