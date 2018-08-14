@@ -6,4 +6,7 @@ public class SceneCreature extends SceneElement {
 		super(SceneElement.ELEMENT_TYPE_CREATURE);
 	}
 	
+	public void update(int diff) {
+		super.update(diff);
+	}
 }

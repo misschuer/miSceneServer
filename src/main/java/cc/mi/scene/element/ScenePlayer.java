@@ -18,4 +18,7 @@ public class ScenePlayer extends SceneElement {
 		this.context = context;
 	}
 	
+	public void update(int diff) {
+		super.update(diff);
+	}
 }
