@@ -268,17 +268,17 @@ public abstract class SceneElement extends BinlogData {
 	public void setMovingLastDiff(int movingLastDiff) {
 		this.movingLastDiff = movingLastDiff;
 	}
-	
+
 	public int getMapId() {
 		//TODO:
 		return 0;
 	}
-	
+
 	public int getEntry() {
 		//TODO:
 		return 0;
 	}
-	
+
 	public void update(int diff) {
 		
 	}
