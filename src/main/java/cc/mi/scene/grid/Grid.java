@@ -7,13 +7,19 @@ import java.util.Map;
 
 import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.callback.Callback;
-import cc.mi.core.generate.stru.BinlogInfo;
+import cc.mi.core.generate.msg.UnitBinlogDataModify;
+import cc.mi.core.generate.stru.SceneElementJumpInfo;
+import cc.mi.core.generate.stru.SceneElementMoveInfo;
+import cc.mi.core.generate.stru.UnitBinlogInfo;
+import cc.mi.core.log.CustomLogger;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.server.SceneMap;
 
 public class Grid {
+	static final CustomLogger logger = CustomLogger.getLogger(Grid.class);
+	
 	// 是否是激活状态
 	private boolean active;
 	
@@ -33,15 +39,15 @@ public class Grid {
 	private final List<Grid> noticeGrid;
 
 	//更新块
-	protected List<BinlogInfo> updateBlocks;
+	protected List<UnitBinlogInfo> updateBlocks;
 	//创建块
-	protected List<BinlogInfo> createBlocks;
+	protected List<UnitBinlogInfo> createBlocks;
 	//离开视野
-	protected List<BinlogInfo> outAreaBlocks;
+	protected List<UnitBinlogInfo> outAreaBlocks;
 	//生物移动包
-	protected List<Object> elementMoveBlocks;
+	protected List<SceneElementMoveInfo> elementMoveBlocks;
 	//生物跳跃包
-	protected List<Object> elementJumpBlocks;
+	protected List<SceneElementJumpInfo> elementJumpBlocks;
 
 	//grid底下的战利品
 	protected final LootObject loot = new LootObject();
@@ -65,37 +71,27 @@ public class Grid {
 
 		this.noticeGrid = new ArrayList<>(9);
 	}
-	
+
 	/**
 	 * //对象更新
 	 */
 	public void objectAccess() {
-		
+
 		Grid self = this;
 		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
 //				if(wo->GetTypeId() == TYPEID_PLAYER)
 //					static_cast<Player*>(wo)->SyncUnitToPlayerData();
-				BinlogInfo binlogInfo = element.packUpdateBinlogInfo(
-						GridManager.gridUpdate.getUpdateIntMask(),
-						GridManager.gridUpdate.getUpdateStrMask()
+
+				UnitBinlogInfo unitBinlogInfo = element.packNewElementBinlogInfo(
+						GridManager.gridUpdateMask.getUpdateIntMask(),
+						GridManager.gridUpdateMask.getUpdateStrMask()
 				);
-				if (binlogInfo != null) {
-					self.addUpdateBlock(binlogInfo);
+				if (unitBinlogInfo != null) {
+					self.addUpdateBlock(unitBinlogInfo);
 					element.clear();
 				}
-				
-//				ByteArray *bytes = ObjMgr.GridMallocByteArray();
-//				if(wo->WriteUpdateBlock(*bytes, wo->GetUIntGuid(),gGridUpdateMask.update_int_mask_,gGridUpdateMask.update_string_mask_))
-//				{
-//					AddUpdateBlock(bytes);
-//					wo->Clear();
-//				}
-//				else
-//				{
-//					ObjMgr.GridFreeByteArray(bytes);
-//				}
 			}
 		};
 		
@@ -132,70 +128,31 @@ public class Grid {
 			return;
 		}
 		
-//		static vector<ByteArray *> ud;
-//		ud.clear();
-//
-//		//创建和离开只通知当前格
-//		ud.insert(ud.end(),create_blocks.begin(),create_blocks.end());	
-//		ud.insert(ud.end(),out_area_blocks.begin(),out_area_blocks.end());
-//		create_blocks.clear();
-//
-//		//更新块
-//		for(auto p:notice_grid)
-//			ud.insert(ud.end(),p->update_blocks.begin(),p->update_blocks.end());		
-//
-//		//如果对象没有变化
-//		if(ud.empty())
-//			return;
-//
-//		tea_pdebug("grid %u SendObjectUpdate", this->index);
-//
-//		ByteArray *byte = ObjMgr.GridMallocByteArray();
-//		byte->clear();
-//		for (auto bytes:ud)
-//		{
-//			bytes->position(0);
-//			byte->writeBytes(*bytes);
-//		}
-//		byte->position(0);
-//		if(byte->length() == 0)
-//		{
-//			ObjMgr.GridFreeByteArray(byte);
-//		}
-//		else if(byte->length() < COMPRESS_MIN_SIZE)
-//		{
-//			packet *pkt = external_protocol_new_packet(SMSG_GRID_UD_OBJECT_2);
-//			packet_write(pkt,(char*)byte->cur_data(),byte->bytesAvailable());
-//			update_packet_len(pkt);
-//			std::for_each(players.begin(),players.end(),SendFunc(pkt));
-//			GridManager* gridMgr = map_inst->GetGridManager();
-//			if (gridMgr)
-//				gridMgr->BroadcastToWatcher(*pkt);
-//			external_protocol_free_packet(pkt);
-//			ObjMgr.GridFreeByteArray(byte);
-//		}
-//		else
-//		{
-//			vector<int> fds;
-//			for (auto player:players)
-//			{
-//				if(player && player->GetSession())
-//					fds.push_back(player->GetSession()->GetFD());
-//			}
-//			ObjMgr.AsyncCompress(*byte, [this, fds](ByteArray *byte){
-//				byte->position(0);
-//				packet *pkt = external_protocol_new_packet(SMSG_GRID_UD_OBJECT);
-//				packet_write(pkt,(char*)byte->cur_data(),byte->bytesAvailable());
-//				update_packet_len(pkt);
-//				SendFunc f(pkt);
-//				std::for_each(fds.begin(),fds.end(),f);
-//				GridManager* gridMgr = map_inst->GetGridManager();
-//				if (gridMgr)
-//					gridMgr->BroadcastToWatcher(*pkt);
-//				external_protocol_free_packet(pkt);	
-//				ObjMgr.GridFreeByteArray(byte);
-//			});
-//		}
+		List<UnitBinlogInfo> binlogInfoList = new ArrayList<>();
+		//创建和离开只通知当前格
+		binlogInfoList.addAll(this.createBlocks);
+		binlogInfoList.addAll(this.outAreaBlocks);
+		this.createBlocks.clear();
+		this.outAreaBlocks.clear();
+		
+		//更新块
+		for (Grid grid : this.noticeGrid) {
+			binlogInfoList.addAll(grid.updateBlocks);
+		}
+		//如果对象没有变化
+		if (binlogInfoList.isEmpty()) {
+			return;
+		}
+		logger.devLog("grid {} SendObjectUpdate", this.index);
+		
+		for (ScenePlayer player : players.values()) {
+			
+			UnitBinlogDataModify ubdm = new UnitBinlogDataModify();
+			ubdm.setFD(player.getContext().getFd());
+			ubdm.setUnitBinlogInfoList(binlogInfoList);
+			
+			player.getContext().sendToGate(ubdm);
+		}
 	}
 	
 	public void clearBlock() {
@@ -296,15 +253,15 @@ public class Grid {
 //		}
 	}
 	
-	public void addUpdateBlock(BinlogInfo binlogInfo) {
+	public void addUpdateBlock(UnitBinlogInfo binlogInfo) {
 		this.updateBlocks.add(binlogInfo);
 	}
 	
-	public void addCreateBlock(BinlogInfo binlogInfo) {
+	public void addCreateBlock(UnitBinlogInfo binlogInfo) {
 		this.createBlocks.add(binlogInfo);
 	}
 	
-	public void addOutArea(BinlogInfo binlogInfo) {
+	public void addOutArea(UnitBinlogInfo binlogInfo) {
 		this.outAreaBlocks.add(binlogInfo);
 	}
 	

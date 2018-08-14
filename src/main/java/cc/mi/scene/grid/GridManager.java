@@ -4,7 +4,7 @@ import cc.mi.scene.server.SceneMap;
 
 public class GridManager {
 	//TODO: 这里的数量指得是对象的长度
-	public static final GridUpdateMask gridUpdate = new GridUpdateMask(64, 64);
+	public static final GridUpdateMask gridUpdateMask = new GridUpdateMask(64, 64);
 	
 	private final SceneMap map;
 	private final int gridWidth ;
