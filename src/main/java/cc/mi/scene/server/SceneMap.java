@@ -22,6 +22,8 @@ public class SceneMap {
 	protected int lootSiteHeight;
 	protected Mask lootSite;
 	
+	protected final int mapId;
+	
 	protected GridManager gridManager;
 	
 	// 是否全图grid
@@ -37,6 +39,8 @@ public class SceneMap {
 		
 //		m_template = MapTemplate::GetMapTempalte(mapid);
 //		ASSERT(m_template);	
+		
+		this.mapId = mapId;
 		
 		this.mapTemplate = MapTemplateManager.INSTANCE.getTemplate(mapId);
 		if (this.mapTemplate == null) {
@@ -187,6 +191,10 @@ public class SceneMap {
 
 	public GridManager getGridManager() {
 		return gridManager;
+	}
+
+	public int getMapId() {
+		return mapId;
 	}
 
 //	void Map::Update(uint32 diff)

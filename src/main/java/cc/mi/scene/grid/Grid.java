@@ -2,6 +2,7 @@ package cc.mi.scene.grid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ import cc.mi.core.log.CustomLogger;
 import cc.mi.core.packet.Packet;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
+import cc.mi.scene.element.SceneGameObject;
 import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.server.SceneMap;
 
@@ -56,6 +58,8 @@ public class Grid {
 	protected final Map<String, ScenePlayer> players = new HashMap<>();
 	//生物对象系统
 	protected final Map<String, SceneCreature> creatures = new HashMap<>();
+	//游戏对象(如花草,传送阵这种东西)系统
+	protected final Map<String, SceneGameObject> gameObjects = new HashMap<>();
 	
 	public Grid(SceneMap inst, 
 			int index, int x, int y, 
@@ -81,6 +85,10 @@ public class Grid {
 		for (SceneElement element : creatures.values()) {
 			callback.invoke(element);
 		}
+		
+		for (SceneElement element : gameObjects.values()) {
+			callback.invoke(element);
+		}
 	}
 	
 	/**
@@ -101,6 +109,7 @@ public class Grid {
 				);
 				if (unitBinlogInfo != null) {
 					self.addUpdateBlock(unitBinlogInfo);
+					element.clear();
 				}
 			}
 		};
@@ -169,8 +178,7 @@ public class Grid {
 		this.createBlocks.clear();
 	}
 	
-	public List<UnitBinlogInfo> getCreateBlockForNewPlayer(GridManager gridManader) {
-		final List<UnitBinlogInfo> unitBinlogInfoList = new ArrayList<>();
+	public void getCreateBlockForNewPlayer(final List<UnitBinlogInfo> infoList, GridManager gridManader) {
 		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
@@ -179,7 +187,7 @@ public class Grid {
 						GridManager.gridUpdateMask.getCreateStrMask()
 				);
 				if (unitBinlogInfo != null) {
-					unitBinlogInfoList.add(unitBinlogInfo);
+					infoList.add(unitBinlogInfo);
 				}
 			}
 		};
@@ -194,16 +202,13 @@ public class Grid {
 //			if(mgr)
 //				mgr->PushNeedFree(bytes);
 //		}
-		
-		return unitBinlogInfoList;
 	}
 	
-	public List<Integer> getOutAreaBlockForPlayer() {
-		final List<Integer> uintIdList = new ArrayList<>();
+	public void getOutAreaBlockForPlayer(final List<UnitBinlogInfo> infoList) {
 		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
-				uintIdList.add(element.getUintId());
+				infoList.add(element.packRemoveElementBinlogInfo());
 			}
 		};
 		
@@ -215,16 +220,13 @@ public class Grid {
 //			loot->WriteReleaseBlock(*bytes, loot->GetUIntGuid());
 //			ar.push_back(bytes);
 //		}
-
-		return uintIdList;
 	}
 	
 	public void sendAllNoticeGridToNewPlayer(GridManager gridManader, ScenePlayer player) {
 		
 		List<UnitBinlogInfo> unitInfoList = new ArrayList<>();
 		for (Grid grid : this.noticeGrid) {
-			List<UnitBinlogInfo> list = grid.getCreateBlockForNewPlayer(gridManader);
-			unitInfoList.addAll(list);
+			grid.getCreateBlockForNewPlayer(unitInfoList, gridManader);
 		}
 		
 		if (this.inst.getGridManager() != null && player.getContext() != null) {
@@ -266,8 +268,8 @@ public class Grid {
 		this.createBlocks.add(binlogInfo);
 	}
 	
-	public void addOutArea(UnitBinlogInfo binlogInfo) {
-		this.outAreaBlocks.add(binlogInfo);
+	public void addOutArea(SceneElement element) {
+		this.outAreaBlocks.add(element.packRemoveElementBinlogInfo());
 	}
 	
 	public boolean isActive() {
@@ -310,15 +312,56 @@ public class Grid {
 		return inst;
 	}
 	
-	public int getNoticeGridSize() {
-		return this.noticeGrid.size();
+	public Iterator<Grid> noticeGridIterator() {
+		return this.noticeGrid.iterator();
 	}
 	
-	public Grid getNoticeGrid(int index) {
-		return this.noticeGrid.get(index);
-	}
 	
 	public void addGrid(Grid grid) {
 		this.noticeGrid.add(grid);
+	}
+	
+	public void playerEnter(ScenePlayer player) {
+		this.players.put(player.getGuid(), player);
+	}
+	
+	public void playerLeave(String guid) {
+		this.players.remove(guid);
+	}
+	
+	public boolean isEmptyPlayer() {
+		return this.players.isEmpty();
+	}
+	
+	public Iterator<SceneCreature> creatureIterator() {
+		return this.creatures.values().iterator();
+	}
+	
+	public void creatureEnter(SceneCreature creature) {
+		this.creatures.put(creature.getGuid(), creature);
+	}
+	
+	public void creatureLeave(String guid) {
+		this.creatures.remove(guid);
+	}
+	
+	public Iterator<SceneGameObject> gameObjectIterator() {
+		return this.gameObjects.values().iterator();
+	}
+	
+	public void gameObjectEnter(SceneGameObject gameObject) {
+		this.gameObjects.put(gameObject.getGuid(), gameObject);
+	}
+	
+	public void gameObjectLeave(String guid) {
+		this.gameObjects.remove(guid);
+	}
+	
+	public boolean containsGameObject(String guid) {
+		return this.gameObjects.containsKey(guid);
+	}
+	
+	public SceneElement getGameObject(String guid) {
+		return this.gameObjects.get(guid);
 	}
 }
