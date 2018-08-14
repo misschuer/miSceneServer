@@ -12,6 +12,7 @@ import cc.mi.core.generate.stru.SceneElementJumpInfo;
 import cc.mi.core.generate.stru.SceneElementMoveInfo;
 import cc.mi.core.generate.stru.UnitBinlogInfo;
 import cc.mi.core.log.CustomLogger;
+import cc.mi.core.packet.Packet;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.ScenePlayer;
@@ -72,6 +73,16 @@ public class Grid {
 		this.noticeGrid = new ArrayList<>(9);
 	}
 
+	private void foreachElementAndInvokeCllback(Callback<SceneElement> callback) {
+		for (SceneElement element : players.values()) {
+			callback.invoke(element);
+		}
+		
+		for (SceneElement element : creatures.values()) {
+			callback.invoke(element);
+		}
+	}
+	
 	/**
 	 * //对象更新
 	 */
@@ -84,24 +95,17 @@ public class Grid {
 //				if(wo->GetTypeId() == TYPEID_PLAYER)
 //					static_cast<Player*>(wo)->SyncUnitToPlayerData();
 
-				UnitBinlogInfo unitBinlogInfo = element.packNewElementBinlogInfo(
+				UnitBinlogInfo unitBinlogInfo = element.packUpdateElementBinlogInfo(
 						GridManager.gridUpdateMask.getUpdateIntMask(),
 						GridManager.gridUpdateMask.getUpdateStrMask()
 				);
 				if (unitBinlogInfo != null) {
 					self.addUpdateBlock(unitBinlogInfo);
-					element.clear();
 				}
 			}
 		};
 		
-		for (SceneElement element : players.values()) {
-			callback.invoke(element);
-		}
-		
-		for (SceneElement element : creatures.values()) {
-			callback.invoke(element);
-		}
+		this.foreachElementAndInvokeCllback(callback);
 
 //		//Grid信息更新
 //		if(loot)
@@ -152,34 +156,35 @@ public class Grid {
 			ubdm.setUnitBinlogInfoList(binlogInfoList);
 			
 			player.getContext().sendToGate(ubdm);
+			
+			if (this.getInst().getGridManager() != null) {
+//				gridMgr->BroadcastToWatcher(*pkt);
+			}
 		}
 	}
 	
 	public void clearBlock() {
-//		for (auto ptr:update_blocks)
-//		{
-//			ObjMgr.GridFreeByteArray(ptr);
-//		}
-//		for (auto ptr:out_area_blocks)
-//			ObjMgr.GridFreeByteArray(ptr);	
-////		for_each(create_blocks.begin(),create_blocks.end(),safe_delete); 创建包内存可能存于多处，需要统一管理m_need_free
-//		update_blocks.clear();
-//		create_blocks.clear();
-//		out_area_blocks.clear();
+		this.updateBlocks.clear();
+		this.outAreaBlocks.clear();
+		this.createBlocks.clear();
 	}
 	
-	public void getCreateBlockForNewPlayer() {
-
-//		auto f = [&mgr, &ar](Unit* wb){
-//			ByteArray *bytes = ObjMgr.GridMallocByteArray();
-//			wb->WriteCreateBlock(*bytes,gGridUpdateMask.create_int_mask_,gGridUpdateMask.create_string_mask_);
-//			ar.push_back(bytes);
-//			if(mgr)
-//				mgr->PushNeedFree(bytes);
-//		};
-//		for_each(players.begin(),players.end(),f);
-//		for_each(creatures.begin(),creatures.end(),f);
-//		for_each(worldobjs.begin(),worldobjs.end(),f);
+	public List<UnitBinlogInfo> getCreateBlockForNewPlayer(GridManager gridManader) {
+		final List<UnitBinlogInfo> unitBinlogInfoList = new ArrayList<>();
+		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+			@Override
+			public void invoke(SceneElement element) {
+				UnitBinlogInfo unitBinlogInfo = element.packNewElementBinlogInfo(
+						GridManager.gridUpdateMask.getCreateIntMask(),
+						GridManager.gridUpdateMask.getCreateStrMask()
+				);
+				if (unitBinlogInfo != null) {
+					unitBinlogInfoList.add(unitBinlogInfo);
+				}
+			}
+		};
+		
+		this.foreachElementAndInvokeCllback(callback);
 //		
 //		if(loot)
 //		{//将所有的Grid的信息也一起打包下去
@@ -189,68 +194,68 @@ public class Grid {
 //			if(mgr)
 //				mgr->PushNeedFree(bytes);
 //		}
+		
+		return unitBinlogInfoList;
 	}
 	
-	public void getOutAreaBlockForPlayer() {
-
-//		auto f = GetOutAreaBlockForPlayer_F(ar);
-//		for_each(players.begin(),players.end(),f);
-//		for_each(creatures.begin(),creatures.end(),f);
-//		for_each(worldobjs.begin(),worldobjs.end(),f);
-//		//TODO:f(loot->GetPublicObj());
-//
+	public List<Integer> getOutAreaBlockForPlayer() {
+		final List<Integer> uintIdList = new ArrayList<>();
+		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+			@Override
+			public void invoke(SceneElement element) {
+				uintIdList.add(element.getUintId());
+			}
+		};
+		
+		this.foreachElementAndInvokeCllback(callback);
+		
 //		if(loot)
 //		{
 //			ByteArray *bytes = ObjMgr.GridMallocByteArray();
 //			loot->WriteReleaseBlock(*bytes, loot->GetUIntGuid());
 //			ar.push_back(bytes);
 //		}
+
+		return uintIdList;
 	}
 	
-	public void sendAllNoticeGridToNewPlayer() {
-
-//		//UpdateData ud;
-//		vector<ByteArray*> ud;
-//
-//		for(GridPtrVec::iterator it = notice_grid.begin();it != notice_grid.end();++it)
-//			(*it)->GetCreateBlocForNewPlayer(ud, mgr);
-//
-//
-//		GridManager* gridMgr = map_inst->GetGridManager();
-//		if (gridMgr && player->GetSession())
-//		{
-//			gridMgr->SendUpdateDate(player->GetSession()->GetFD(), ud);
-//		}	
+	public void sendAllNoticeGridToNewPlayer(GridManager gridManader, ScenePlayer player) {
+		
+		List<UnitBinlogInfo> unitInfoList = new ArrayList<>();
+		for (Grid grid : this.noticeGrid) {
+			List<UnitBinlogInfo> list = grid.getCreateBlockForNewPlayer(gridManader);
+			unitInfoList.addAll(list);
+		}
+		
+		if (this.inst.getGridManager() != null && player.getContext() != null) {
+//			this.inst.getGridManager().SendUpdateData(player.getContext().getFd(), unitInfoList);
+		}
+	}
+	
+	
+	public void broadcast(Packet packet) {
+		this.broadcast(packet, null);
+	}
+	
+	public void broadcast(Packet packet, ScenePlayer player) {
+		this.broadcast(packet, player, false);
 	}
 
-	public void broadcast() {
-
-//		GridPtrVec::const_iterator _it = notice_grid.begin();
-//		GridPtrVec::const_iterator _end = notice_grid.end();
-//		SendFunc f(&pkt);
-//
-//		//先简单广播, 恶心的嵌套循环
-//		for(;_it != _end;++_it)
-//		{
-//			for(PlayerSet::const_iterator it = (*_it)->players.begin();
-//				it != (*_it)->players.end();++it)
-//			{
-//				Player *p = *it;
-//				if(!p)
-//					continue;
-//				if(p == player && self == false)
-//					continue;			
-//				f(p);		
-//			}
-//
-//		}
-//
-//		//给观察者也广播一份
-//		GridManager* gridMgr = map_inst->GetGridManager();
-//		if (gridMgr)
-//		{
-//			gridMgr->BroadcastToWatcher(pkt);
-//		}
+	public void broadcast(Packet packet, ScenePlayer player, boolean includeSelf) {
+		
+		for (Grid grid : this.noticeGrid) {
+			for (ScenePlayer p : grid.players.values()) {
+				if (p == player && !includeSelf) {
+					continue;
+				}
+				p.getContext().sendToGate(packet);
+			}
+		}
+		
+		//给观察者也广播一份
+		if (this.inst.getGridManager() != null) {
+//			this.inst.getGridManager().BroadcastToWatcher(pkt);
+		}
 	}
 	
 	public void addUpdateBlock(UnitBinlogInfo binlogInfo) {
