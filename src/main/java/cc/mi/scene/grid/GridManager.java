@@ -239,8 +239,8 @@ public final class GridManager {
 		}
 
 		// 发送给
-		if (player.getContext() != null) {
-			this.sendUpdateData(player.getContext().getFd(), ud);
+		if (player.getContextPlayer().getContext() != null) {
+			this.sendUpdateData(player.getContextPlayer().getContext().getFd(), ud);
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -284,11 +284,11 @@ public final class GridManager {
 			Iterator<ScenePlayer> playerIter = grid.playerIterator();
 			for (;playerIter.hasNext();) {
 				ScenePlayer player = playerIter.next();
-				if (player.getContext() == null) {
+				if (player.getContextPlayer().getContext() == null) {
 					continue;
 				}
 				// 登录的玩家不能作为观察者
-				if (player.getContext().getFd() == fd) {
+				if (player.getContextPlayer().getContext().getFd() == fd) {
 					return false;
 				}
 			}
@@ -537,8 +537,8 @@ public final class GridManager {
 		// 并且发送给他新grid的状态
 		if (element.getElementType() == SceneElement.ELEMENT_TYPE_PLAYER && !ud.isEmpty()) {
 			ScenePlayer player = (ScenePlayer) element;
-			if (player.getContext() != null) {
-				this.sendUpdateData(player.getContext().getFd(), ud);
+			if (player.getContextPlayer().getContext() != null) {
+				this.sendUpdateData(player.getContextPlayer().getContext().getFd(), ud);
 			}
 		}
 	}

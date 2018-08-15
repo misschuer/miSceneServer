@@ -193,29 +193,25 @@ public class SceneServerManager extends ServerManager {
 			
 			String ownerId = entryInfo.getKey();
 			WaitJoinInfo info = entryInfo.getValue();
-			Player player = null;
+			SceneContextPlayer contextPlayer = null;
 			if (this.objManager.contains(ownerId)) {
-				player = (Player)this.objManager.get(ownerId);
+				contextPlayer = (SceneContextPlayer)this.objManager.get(ownerId);
 			}
 			
-			if (player.getTeleportSign() == info.getSign()) {
-				
-//					tea_pdebug("player %s join map [%u] BEGIN",waitJoining->player_guid, waitJoining->to_map_id);
-//					context->On_Teleport_OK(waitJoining->connection_id, waitJoining->to_map_id, waitJoining->to_instance_id, waitJoining->to_x, waitJoining->to_y);
+			if (contextPlayer.getTeleportSign() == info.getSign()) {
+				logger.devLog("player {} join map [{}] BEGIN", ownerId, info.getMapId());
+				contextPlayer.onTeleportOK(info.getFd(), info.getMapId(), info.getInstId(), info.getX(), info.getY());
 //					//通知网关服
 //					ScenedApp::g_app->RegSessionOpts(waitJoining->connection_id);
-//					tea_pdebug("player %s join map [%u]END",waitJoining->player_guid, waitJoining->to_map_id);	
-				
+				logger.devLog("player {} join map [{}]END", ownerId, info.getMapId());
 				removeList.add(ownerId);
-				return;
-			}
-			if (now - info.getCreateTime() > 60) {
+			} else if (now - info.getCreateTime() > 60) {
 				logger.devLog("updateWaitJoin timeout, ownerId:{}, fd:{}, mapid:{} instanceid:{}",
 						ownerId, info.getFd(), info.getMapId(), info.getInstId());
 				
-				if (player != null){
+				if (contextPlayer != null){
 					//TODO: 错误的关闭的code
-					player.getContext().closeSession(0);
+					contextPlayer.getContext().closeSession(0);
 				}
 				removeList.add(ownerId);
 			}

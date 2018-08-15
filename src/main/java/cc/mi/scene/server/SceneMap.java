@@ -26,6 +26,7 @@ public class SceneMap {
 	protected Mask lootSite;
 	
 	protected final int mapId;
+	protected final int lineNo;
 	
 	protected GridManager gridManager;
 	
@@ -44,6 +45,7 @@ public class SceneMap {
 //		ASSERT(m_template);	
 		
 		this.mapId = mapId;
+		this.lineNo = lineNo;
 		
 		this.mapTemplate = MapTemplateManager.INSTANCE.getTemplate(mapId);
 		if (this.mapTemplate == null) {
@@ -1000,6 +1002,10 @@ public class SceneMap {
 	
 	public void clearInstance() {
 		mapInstHash.clear();
+	}
+
+	public int getLineNo() {
+		return lineNo;
 	}
 
 //	//检测副本的生存周期

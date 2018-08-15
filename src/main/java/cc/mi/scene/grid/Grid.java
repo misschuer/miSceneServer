@@ -161,10 +161,10 @@ public class Grid {
 		for (ScenePlayer player : players.values()) {
 			
 			UnitBinlogDataModify ubdm = new UnitBinlogDataModify();
-			ubdm.setFD(player.getContext().getFd());
+			ubdm.setFD(player.getContextPlayer().getContext().getFd());
 			ubdm.setUnitBinlogInfoList(binlogInfoList);
 			
-			player.getContext().sendToGate(ubdm);
+			player.getContextPlayer().getContext().sendToGate(ubdm);
 			
 			if (this.getInst().getGridManager() != null) {
 //				gridMgr->BroadcastToWatcher(*pkt);
@@ -229,8 +229,8 @@ public class Grid {
 			grid.getCreateBlockForNewPlayer(unitInfoList, gridManader);
 		}
 		
-		if (this.inst.getGridManager() != null && player.getContext() != null) {
-//			this.inst.getGridManager().SendUpdateData(player.getContext().getFd(), unitInfoList);
+		if (this.inst.getGridManager() != null && player.getContextPlayer().getContext() != null) {
+//			this.inst.getGridManager().SendUpdateData(player.getContextPlayer().getContext().getFd(), unitInfoList);
 		}
 	}
 	
@@ -250,7 +250,7 @@ public class Grid {
 				if (p == player && !includeSelf) {
 					continue;
 				}
-				p.getContext().sendToGate(packet);
+				p.getContextPlayer().getContext().sendToGate(packet);
 			}
 		}
 		

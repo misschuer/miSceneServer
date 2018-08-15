@@ -13,7 +13,7 @@ public class SceneObjectManager extends ServerObjectManager {
 	@Override
 	protected BinlogData createBinlogData(String guid) {
 		if (GuidManager.INSTANCE.isPlayerGuid(guid)) {
-			return new Player();
+			return new SceneContextPlayer();
 		}
 		return new BinlogData(1 << 6, 1 << 6);
 	}
