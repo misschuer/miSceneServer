@@ -2,10 +2,12 @@ package cc.mi.scene.grid;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.callback.Callback;
@@ -29,6 +31,8 @@ public final class GridManager {
 		SceneElementEnumFields.ELEMENT_STR_FIELDS_SIZE
 	);
 
+	protected final Set<Integer> watchers = new HashSet<>();
+	
 	protected final SceneMap map;
 	protected final int gridWidth;
 	protected final int gridHeight;
@@ -267,42 +271,45 @@ public final class GridManager {
 		player.setGrid(null);
 	}
 
-	// bool GridManager::AddWatcher(uint32 fd, const string& owner_guid, uint32
-	// map_id, uint32 instance_id)
-	// {
-	// //把需要观察的地图信息告诉客户端
-	// packet *pkt = nullptr;
-	// pack_notice_watcher_map_info(&pkt, owner_guid.c_str(), map_id, instance_id);
-	// SendFunc f(pkt);
-	// f(fd);
-	// external_protocol_free_packet(pkt);
-	//
-	// for(auto it = m_active_grid.begin();it != m_active_grid.end();++it)
-	// {
-	// for (auto p:(*it)->players)
-	// {
-	// if (!p || !p->GetSession())
-	// continue;
-	// //观察者和被观察者在同一张地图
-	// if (p->GetSession()->GetFD() == fd)
-	// return false;
-	// }
-	// }
-	//
-	// m_watchers.insert(fd);
-	// //将网格上面的其他玩家信息发给他(ps：支持观察者模式的地图必须是全图广播的)
-	// vector<ByteArray*> ud;
-	// for(auto it = m_active_grid.begin();it != m_active_grid.end();++it)
-	// (*it)->GetCreateBlocForNewPlayer(ud, this);
-	//
-	// sendUpdateData(fd, ud);
-	// return true;
-	// }
-	//
-	// void GridManager::DelWatcher(uint32 fd)
-	// {
-	// m_watchers.erase(fd);
-	// }
+	public boolean addWatcher(int fd, final String ownerId, int mapId, int instId) {
+		
+		//把需要观察的地图信息告诉客户端
+//		packet *pkt = nullptr;
+//		pack_notice_watcher_map_info(&pkt, owner_guid.c_str(), map_id, instance_id);
+//		SendFunc f(pkt);
+//		f(fd);
+//		external_protocol_free_packet(pkt);
+		
+		for (Grid grid : this.activeGrid.values()) {
+			Iterator<ScenePlayer> playerIter = grid.playerIterator();
+			for (;playerIter.hasNext();) {
+				ScenePlayer player = playerIter.next();
+				if (player.getContext() == null) {
+					continue;
+				}
+				// 登录的玩家不能作为观察者
+				if (player.getContext().getFd() == fd) {
+					return false;
+				}
+			}
+		}
+		
+		this.watchers.add(fd);
+		
+		//将网格上面的其他玩家信息发给他(ps：支持观察者模式的地图必须是全图广播的)
+		List<UnitBinlogInfo> ud = new ArrayList<>();
+		for (Grid grid : this.activeGrid.values()) {
+			grid.getCreateBlockForNewPlayer(ud, this);
+		}
+
+		this.sendUpdateData(fd, ud);
+
+		return true;
+	}
+	
+	public void delWatcher(int fd) {
+		this.watchers.remove(fd);
+	}
 
 	public void addWorldObject(SceneElement element) {
 
@@ -584,18 +591,21 @@ public final class GridManager {
 		grid.setActive(active);
 	}
 
-	// Grid* GridManager::GridCoordPtr(int x,int y)
-	// {
-	// int gx = 0,gy = 0;
-	// gx = x/m_grid_width;
-	// gy = y/m_grid_width;
-	// if(gx < 0 || gx >= m_gwidth)
-	// return nullptr;
-	// if(gy < 0 || gy >= m_gheight)
-	// return nullptr;
-	// return &m_grids[gy*m_gwidth+gx];
-	// }
-	//
+	public Grid gridCoordPtr(int x, int y) {
+		
+		int gx = Math.floorDiv(x, this.gridWidth);
+		int gy = Math.floorDiv(y, this.gridWidth);
+		
+		if (gx < 0 || gx >= this.gridWidth) {
+			return null;
+		}
+		if (gy < 0 || gy >= this.gridHeight) {
+			return null;
+		}
+		
+		return this.grids[gy*gridWidth+gx];
+	}
+	
 	// void GridManager::SendFightingBlocks(Grid *grid)
 	// {
 	// auto fun = [&](int opcode, int not_compree_opcode, vector<ByteArray*>&
