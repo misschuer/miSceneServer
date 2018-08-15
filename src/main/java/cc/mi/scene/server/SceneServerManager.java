@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,8 +21,11 @@ import cc.mi.core.log.CustomLogger;
 import cc.mi.core.manager.ServerManager;
 import cc.mi.core.packet.Packet;
 import cc.mi.core.utils.ServerProcessBlock;
+import cc.mi.core.utils.TimestampUtils;
 import cc.mi.scene.handler.BinlogDataModifyHandler;
 import cc.mi.scene.handler.CreateMapHandler;
+import cc.mi.scene.handler.JoinMapHandler;
+import cc.mi.scene.info.WaitJoinInfo;
 
 public class SceneServerManager extends ServerManager {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneServerManager.class);
@@ -42,9 +46,12 @@ public class SceneServerManager extends ServerManager {
 	// 对象管理
 	private final SceneObjectManager objManager = new SceneObjectManager();
 	
+	private final Map<String, WaitJoinInfo> waitJoinHash = new HashMap<>();
+	
 	static {
 		handlers.put(Opcodes.MSG_BINLOGDATAMODIFY, new BinlogDataModifyHandler());
 		handlers.put(Opcodes.MSG_CREATEMAP, new CreateMapHandler());
+		handlers.put(Opcodes.MSG_JOINMAPMSG, new JoinMapHandler());
 		
 		opcodes = new LinkedList<>();
 		opcodes.addAll(handlers.keySet());
@@ -93,6 +100,8 @@ public class SceneServerManager extends ServerManager {
 		this.doProcess(diff);
 		// 处理包信息
 		this.dealPacket();
+		// 处理更新信息
+		this.doUpdate(diff);
 	}
 	
 	private void doInit() {
@@ -148,7 +157,6 @@ public class SceneServerManager extends ServerManager {
 	}
 	
 	public void pushPacket(Packet packet) {
-		//TODO: 检测包的频率(这里需要么?)
 		synchronized (this) {
 			packetQueue.add(packet);
 		}
@@ -156,5 +164,65 @@ public class SceneServerManager extends ServerManager {
 	
 	protected void addTagWatchCallback(String ownerTag, Callback<Void> callback) {
 		objManager.addCreateCallback(ownerTag, callback);
+	}
+
+	public SceneObjectManager getObjManager() {
+		return objManager;
+	}
+	
+	
+	private void doUpdate(int diff) {
+		this.updateWaitJoin();
+	}
+	
+	public void putWaitJoin(String guid, int fd, int instId, int mapId, float x, float y, byte sign) {
+		WaitJoinInfo info = new WaitJoinInfo(fd, instId, mapId, x, y, sign);
+		this.waitJoinHash.put(guid, info);
+	}
+	
+	public boolean isInWaitJoin(String guid) {
+		return this.waitJoinHash.containsKey(guid);
+	}
+	
+	public void updateWaitJoin() {
+		
+		int now = TimestampUtils.now();
+		List<String> removeList = new LinkedList<>();
+		
+		for (Entry<String, WaitJoinInfo> entryInfo : waitJoinHash.entrySet()) {
+			
+			String ownerId = entryInfo.getKey();
+			WaitJoinInfo info = entryInfo.getValue();
+			Player player = null;
+			if (this.objManager.contains(ownerId)) {
+				player = (Player)this.objManager.get(ownerId);
+			}
+			
+			if (player.getTeleportSign() == info.getSign()) {
+				
+//					tea_pdebug("player %s join map [%u] BEGIN",waitJoining->player_guid, waitJoining->to_map_id);
+//					context->On_Teleport_OK(waitJoining->connection_id, waitJoining->to_map_id, waitJoining->to_instance_id, waitJoining->to_x, waitJoining->to_y);
+//					//通知网关服
+//					ScenedApp::g_app->RegSessionOpts(waitJoining->connection_id);
+//					tea_pdebug("player %s join map [%u]END",waitJoining->player_guid, waitJoining->to_map_id);	
+				
+				removeList.add(ownerId);
+				return;
+			}
+			if (now - info.getCreateTime() > 60) {
+				logger.devLog("updateWaitJoin timeout, ownerId:{}, fd:{}, mapid:{} instanceid:{}",
+						ownerId, info.getFd(), info.getMapId(), info.getInstId());
+				
+				if (player != null){
+					//TODO: 错误的关闭的code
+					player.getContext().closeSession(0);
+				}
+				removeList.add(ownerId);
+			}
+		}
+		
+		for (String guid : removeList) {
+			waitJoinHash.remove(guid);
+		}
 	}
 }

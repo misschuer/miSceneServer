@@ -13,9 +13,12 @@ import cc.mi.scene.info.ParentMapInfo;
 
 public class SceneMap {
 	
-	protected final Map<Integer, ParentMapInfo> allParentMapInfoHash = new HashMap<>();
+	static final Map<Integer, ParentMapInfo> allParentMapInfoHash = new HashMap<>();
+	
+	static final Map<Integer, Map<Integer, SceneMap>> mapInstHash = new HashMap<>();
 	
 	protected ParentMapInfo mapInfo;
+	protected SceneMap parentInst;
 	
 	protected MapTemplate mapTemplate;
 	protected int lootSiteWidth ;
@@ -945,79 +948,60 @@ public class SceneMap {
 //		return tele;
 //	}
 	
-//	Map *Map::CreateInstance(uint32 instanceid,uint32 mapid,uint32 lineno,const string &general_id)
-//	{
-//		ASSERT(Map::FindInstance(instanceid,mapid)==NULL);
-//		Map *m = NULL;
-//		//判断父级地图是否存在
-//		const MapTemplate *mt = MapTemplate::GetMapTempalte(mapid);
-//		if(mt->GetParentMapid() == mapid)	//如果是父级直接创建
-//		{
-//			//如果是副本则创建不同的对象实例
-//			m = mt->IsInstance() ? new InstanceMap(mapid, instanceid, lineno, general_id) : new Map(mapid, instanceid, lineno, general_id);
-//		}
-//		else
-//		{
-//			mt = MapTemplate::GetMapTempalte(mt->GetParentMapid());
-//			Map* parent = Map::FindInstance(instanceid,mt->GetParentMapid());
-//			if(!parent)
-//				parent = CreateInstance(instanceid,mt->GetParentMapid(),lineno,general_id);
-//
-//			//如果是副本则创建不同的对象实例
-//			m = mt->IsInstance() ? new InstanceMap(mapid, instanceid, lineno, general_id) : new Map(mapid, instanceid, lineno, general_id);
-//			m->m_parent = parent;		//设置父级地图实例
-//		}
-//		ASSERT(m);
-//		map_instances.insert(make_pair(instanceid,m));
-//
-//		return m;
-//	}
-//
-//	//删除地图实例
-//	void Map::DelMap(uint32 instanceid)
-//	{
-//		for(auto it=map_instances.lower_bound(instanceid);
-//			it != map_instances.upper_bound(instanceid);++it)
-//		{
-//			Map *m = it->second;
-//			//地图实例删除时，玩家必须为空
-//			//当网关服关掉的时候，玩家虽然不是空的，但是也是允许删除的
-//			if(!m->m_players.empty() || !ScenedApp::g_app->get_connection())
-//			{
-//				stringstream ss;
-//				for (auto it:m->m_players)
-//				{
-//					ss << it.second->guid() << ";";
-//				}
-//				tea_pinfo("Map::DelMap map id %u,    %s", m->GetMapId(), ss.str().c_str());
-//			}
-//			safe_delete(m);
-//		}
-//		map_instances.erase(instanceid);
-//		auto it = all_parent_map_info.find(instanceid);
-//		ASSERT(it != all_parent_map_info.end());
-//		safe_delete(it->second);
-//		all_parent_map_info.erase(instanceid);
-//	}
-//
-//	Map *Map::FindInstance(uint32 instance_id,uint32 map_id)
-//	{
-//		for(auto it=map_instances.lower_bound(instance_id);
-//			it != map_instances.upper_bound(instance_id);++it)
-//		{
-//			if(it->second->GetMapId() == map_id)
-//				return it->second;
-//		}
-//		return NULL;
-//	}
+	public static SceneMap createInstance (int instId, int mapId, int lineNo, String ext) {
+		
+		SceneMap inst = null;
+		//判断父级地图是否存在
+		MapTemplate mt = MapTemplateManager.INSTANCE.getTemplate(mapId);
+		int parentId = mt.getBaseInfo().getParentId();
+		if (parentId == mapId) {	//如果是父级直接创建
+			//如果是副本则创建不同的对象实例
+			inst = mt.isInstance() ? new SceneInstanceMap(mapId, instId, lineNo, ext) : new SceneMap(mapId, instId, lineNo, ext);
+		} else {
+			mt = MapTemplateManager.INSTANCE.getTemplate(parentId);
+			SceneMap parent = SceneMap.findInstance(instId, parentId);
+			if (!SceneMap.containsInstance(instId, parentId)) {
+				parent = SceneMap.createInstance(instId, mapId, lineNo, ext);
+			}
+
+			//如果是副本则创建不同的对象实例
+			inst = mt.isInstance() ? new SceneInstanceMap(mapId, instId, lineNo, ext) : new SceneMap(mapId, instId, lineNo, ext);
+			inst.parentInst = parent; //设置父级地图实例
+		}
+		
+		SceneMap.putInstance(instId, inst);
+
+		return inst;
+	}
+
+	//删除地图实例
+	public void delMap(int instId) {
+		SceneMap.mapInstHash.remove(instId);
+		SceneMap.allParentMapInfoHash.remove(instId);
+	}
+
+	public static SceneMap findInstance(int instId, int mapId) {
+		if (!mapInstHash.containsKey(instId)) {
+			return null;
+		}
+		return mapInstHash.get(instId).get(mapId);
+	}
 	
-//	void Map::ClearInstance()
-//	{
-//		std::for_each(map_instances.begin(),map_instances.end(),
-//			[](MapInstances::value_type& it){safe_delete(it.second);});
-//		map_instances.clear();
-//	}
-//
+	public static boolean containsInstance(int instId, int mapId) {
+		return mapInstHash.containsKey(instId) && mapInstHash.get(instId).containsKey(mapId) ;
+	}
+	
+	private static void putInstance(int instId, SceneMap inst) {
+		if (!mapInstHash.containsKey(instId)) {
+			mapInstHash.put(instId, new HashMap<>());
+		}
+		mapInstHash.get(instId).put(inst.getMapId(), inst);
+	}
+	
+	public void clearInstance() {
+		mapInstHash.clear();
+	}
+
 //	//检测副本的生存周期
 //	void Map::CheckMapInstanceLastTime(TimerHolder& th)
 //	{
@@ -1111,40 +1095,7 @@ public class SceneMap {
 //		}
 //		th._next_time += 60;		//一分钟后继续检查
 //	}
-//
-//	void Map::CheckWaitJoingVec(uint32 /*diff*/)
-//	{
-//		uint32 now = (uint32)time(NULL);
-//		for (auto it = wait_joing_vec.begin(); it != wait_joing_vec.end();)
-//		{
-//			wait_joining *waitJoining = &it->second;
-//			//TODO: 场景服获得p对象
-//			auto *context = dynamic_cast<ScenedContext*>(ObjMgr.Get(waitJoining->player_guid));
-//			//如果副本实例ID与回调序号相等说明数据已经到达,反之
-//			if(context && context->GetTeleportSign() == waitJoining->teleport_sign)
-//			{
-//				tea_pdebug("player %s join map [%u] BEGIN",waitJoining->player_guid, waitJoining->to_map_id);
-//				context->On_Teleport_OK(waitJoining->connection_id, waitJoining->to_map_id, waitJoining->to_instance_id, waitJoining->to_x, waitJoining->to_y);
-//				//通知网关服
-//				ScenedApp::g_app->RegSessionOpts(waitJoining->connection_id);
-//				tea_pdebug("player %s join map [%u]END",waitJoining->player_guid, waitJoining->to_map_id);				
-//
-//				it = wait_joing_vec.erase(it);
-//			}
-//			else if(now - waitJoining->create_tm > 60)
-//			{
-//				//如果相应传送超过1分钟,则让其传送失效
-//				tea_pwarn("CheckWaitJoingVec timeout, guid:%s, fd:%u, mapid:%d instanceid:%u",waitJoining->player_guid, waitJoining->connection_id, waitJoining->to_map_id, waitJoining->to_instance_id);
-//				if(context){
-//					context->Close(PLAYER_CLOSE_OPERTE_SCREND_ONE38,"");
-//				}
-//				it = wait_joing_vec.erase(it);
-//			}
-//			else
-//				++it;
-//		}
-//	}
-	
+
 //	void Map::UpdateParentInfo()
 //	{
 //		for (auto it_mi:all_parent_map_info)
