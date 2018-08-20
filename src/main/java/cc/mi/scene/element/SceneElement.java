@@ -11,6 +11,7 @@ import cc.mi.core.binlog.stru.BinlogStruValueStr;
 import cc.mi.core.constance.BinlogOptType;
 import cc.mi.core.constance.SceneElementEnumFields;
 import cc.mi.core.generate.stru.UnitBinlogInfo;
+import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
 import cc.mi.scene.grid.Grid;
 import cc.mi.scene.server.SceneMap;
@@ -32,6 +33,8 @@ public abstract class SceneElement extends BinlogData {
 	protected int movingMills;			//移动完当前点需要消耗,等于0时处于静止状态
 	protected Queue<Float> movingPath;	//移动路径
 	protected int  movingLastDiff;		//累计时间差,用于减小精度误差
+	
+	private int intGuid = 0;
 
 //	uint32 m_last_victim_target;		//最后被我攻击的生物
 //	UnitSet m_attacker_unit;					//生物攻击者
@@ -69,21 +72,33 @@ public abstract class SceneElement extends BinlogData {
 //	PassiveSpellLevelMap m_passive_spell_level;	//被动技能和等级
 
 	public SceneElement(int elementType) {
-		//TODO: 这里填元素数据的长度
 		super(
 			SceneElementEnumFields.ELEMENT_INT_FIELDS_SIZE, 
 			SceneElementEnumFields.ELEMENT_STR_FIELDS_SIZE
 		);
 		this.elementType = elementType;
+		this.setUInt8(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO, (short) 0, elementType);
+	}
+	
+	public void setElementGuid(String guid) {
+		this.setGuid(guid);
+		intGuid = GuidManager.INSTANCE.getElementIntGuid(guid);
 	}
 
+	public void setEntry(int entry) {
+		this.setUInt16(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO2, (short) 0, entry);
+	}
+	
+	public int getEntry() {
+		return this.getUInt16(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO2, (short) 0);
+	}
+	
 	public int getElementType() {
 		return elementType;
 	}
 	
 	public int getUintId() {
-		//TODO: guid的uint表示
-		return 0;
+		return this.intGuid;
 	}
 	
 	public UnitBinlogInfo packNewElementBinlogInfo() {
@@ -270,11 +285,6 @@ public abstract class SceneElement extends BinlogData {
 	}
 
 	public int getMapId() {
-		//TODO:
-		return 0;
-	}
-
-	public int getEntry() {
 		//TODO:
 		return 0;
 	}

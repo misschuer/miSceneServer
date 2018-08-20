@@ -3,7 +3,9 @@ package cc.mi.scene.server;
 import java.util.HashMap;
 import java.util.Map;
 
+import cc.mi.core.constance.ObjectType;
 import cc.mi.core.manager.MapTemplateManager;
+import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
 import cc.mi.core.utils.TimestampUtils;
 import cc.mi.core.xlsxData.MapTemplate;
@@ -1006,6 +1008,10 @@ public class SceneMap {
 
 	public int getLineNo() {
 		return lineNo;
+	}
+	
+	public static String newSceneElementId() {
+		return GuidManager.INSTANCE.makeNewGuid(ObjectType.UNIT);
 	}
 
 //	//检测副本的生存周期
