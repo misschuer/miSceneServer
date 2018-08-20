@@ -10,6 +10,7 @@ import cc.mi.core.utils.Mask;
 import cc.mi.core.utils.TimestampUtils;
 import cc.mi.core.xlsxData.MapTemplate;
 import cc.mi.scene.config.ServerConfig;
+import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
 
@@ -18,6 +19,8 @@ public class SceneMap {
 	static final Map<Integer, ParentMapInfo> allParentMapInfoHash = new HashMap<>();
 	
 	static final Map<Integer, Map<Integer, SceneMap>> mapInstHash = new HashMap<>();
+	
+	private Map<String, ScenePlayer> playerHash = new HashMap<>();
 	
 	protected ParentMapInfo mapInfo;
 	protected SceneMap parentInst;
@@ -28,6 +31,7 @@ public class SceneMap {
 	protected Mask lootSite;
 	
 	protected final int mapId;
+	protected final int instId;
 	protected final int lineNo;
 	
 	protected GridManager gridManager;
@@ -46,7 +50,8 @@ public class SceneMap {
 //		m_template = MapTemplate::GetMapTempalte(mapid);
 //		ASSERT(m_template);	
 		
-		this.mapId = mapId;
+		this.mapId  =  mapId;
+		this.instId = instId;
 		this.lineNo = lineNo;
 		
 		this.mapTemplate = MapTemplateManager.INSTANCE.getTemplate(mapId);
@@ -381,17 +386,16 @@ public class SceneMap {
 //		if(m_is_close_respawn) return;
 //		m_player_respawn.push_back(player->GetUIntGuid());
 //	}
-//
-//	void Map::SendCreateBlock(ScenedContext *player)
-//	{
-//		SendCreateBlock(player->GetFD());
-//	}
-//
-//	void Map::SendCreateBlock(uint32 fd)
-//	{
-//		if (!fd)
-//			return;
-//		
+
+	public void sendCreateBlock(SceneContextPlayer contextPlayer) {
+		this.sendCreateBlock(contextPlayer.getContext().getFd());
+	}
+
+	public void sendCreateBlock(int fd) {
+		
+		if (fd == 0) {
+			return;
+		}
 //		m_parent_map_info->WriteCreateBlock(m_byte_buf);
 //		m_byte_buf.position(0);
 //		ObjMgr.Compress(m_byte_buf);
@@ -406,7 +410,7 @@ public class SceneMap {
 //		ScenedApp::g_app->SendToNetgd(dst);
 //		internal_protocol_free_packet(dst);	
 //		external_protocol_free_packet(pkt_compress);	
-//	}
+	}
 //
 //	void Map::SendDeleteBlock(ScenedContext *player)
 //	{
@@ -478,33 +482,44 @@ public class SceneMap {
 //			return false;
 //		return true;
 //	}
-//
-//	void Map::JoinPlayer(Player *player)
-//	{
-//		ASSERT(player->GetInstanceId() == 0);
-//		//ASSERT(player->GetSession()->GetInstanceId() == 0);
-//		player->SetInstanceId(GetInstanceID());
-//		player->GetSession()->SetInstanceId(GetInstanceID());
-//		player->SetMap(this);
-//		if(player->GetSession())
-//			SendCreateBlock(player->GetSession());
-//
-//		m_grids->AddPlayer(player);
-//		m_players.insert(make_pair(player->GetGuid(), player));
-//
-//		ASSERT(player->GetInstanceId() == GetInstanceID());
-//		ASSERT(player->GetMapId() == GetMapId());
-//
-//		//如果脚本不为空则执行
-//		if(!m_state_script.empty())
-//			OnJoinPlayer(this,player);
-//		
-//		player->OnJoinMap();		//调用任务脚本
-//
-//		if(!m_state_script.empty())
-//			OnAfterJoinPlayer(this, player);
-//	}
-//
+
+	public void joinPlayer(ScenePlayer player) {
+		
+		if (player.getInstanceId() != 0) {
+			throw new RuntimeException(String.format("joinPlayer guid = %s instId = %d != 0", player.getGuid(), player.getInstanceId()));
+		}
+		player.setInstanceId(this.instId);
+		player.getContextPlayer().setInstanceId(this.instId);
+		player.setMap(this);
+		
+		this.sendCreateBlock(player.getContextPlayer());
+		this.gridManager.addPlayer(player);
+		
+		playerHash.put(player.getGuid(), player);
+
+		if (player.getInstanceId() != this.instId) {
+			throw new RuntimeException(String.format("joinPlayer err instId"));
+		}
+		
+		if (player.getMapId() != this.mapId) {
+			throw new RuntimeException(String.format("joinPlayer err mapId"));
+		}
+
+		this.onJoinMapBefore(player);
+		
+		player.onJoinMap();
+
+		this.onAfterJoinPlayer(player);
+	}
+	
+	protected void onJoinMapBefore(ScenePlayer player) {
+		
+	}
+	
+	protected void onAfterJoinPlayer(ScenePlayer player) {
+		
+	}
+
 //	void Map::AddGameObject(GameObject *go)
 //	{
 //		ASSERT(go);	
@@ -1195,4 +1210,8 @@ public class SceneMap {
 //		ObjMgr.GridFreeByteArray(buff);
 //		//unit->GetGrid()->fighting_blocks.push_back(buff);
 //	}
+	
+	public boolean isValidPosition(int x, int y) {
+		return this.mapTemplate.isValidPosition(x, y);
+	}
 }
