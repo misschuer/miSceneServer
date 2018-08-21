@@ -24,6 +24,7 @@ import cc.mi.core.utils.ServerProcessBlock;
 import cc.mi.core.utils.TimestampUtils;
 import cc.mi.scene.handler.BinlogDataModifyHandler;
 import cc.mi.scene.handler.CreateMapHandler;
+import cc.mi.scene.handler.InnerServerConnListHandler;
 import cc.mi.scene.handler.JoinMapHandler;
 import cc.mi.scene.info.WaitJoinInfo;
 
@@ -52,6 +53,7 @@ public class SceneServerManager extends ServerManager {
 		handlers.put(Opcodes.MSG_BINLOGDATAMODIFY, new BinlogDataModifyHandler());
 		handlers.put(Opcodes.MSG_CREATEMAP, new CreateMapHandler());
 		handlers.put(Opcodes.MSG_JOINMAPMSG, new JoinMapHandler());
+		handlers.put(Opcodes.MSG_INNERSERVERCONNLIST, new InnerServerConnListHandler());
 		
 		opcodes = new LinkedList<>();
 		opcodes.addAll(handlers.keySet());

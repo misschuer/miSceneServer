@@ -13,8 +13,7 @@ public class CreateMapHandler extends HandlerImpl {
 	static final CustomLogger logger = CustomLogger.getLogger(CreateMapHandler.class);
 	
 	@Override
-	public void handle(ServerContext player, Channel channel, Packet decoder) {
-		// TODO Auto-generated method stub
+	public void handle(ServerContext nil, Channel channel, Packet decoder) {
 		CreateMap cm = (CreateMap) decoder;
 		logger.devLog("CreateMapHandler {} {} {}", cm.getMapId(), cm.getInstId(), cm.getExt());
 		if (!SceneMap.containsInstance(cm.getInstId(), cm.getMapId())) {
