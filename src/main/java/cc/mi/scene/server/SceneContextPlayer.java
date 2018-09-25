@@ -58,4 +58,21 @@ public class SceneContextPlayer extends PlayerBase {
 	public SceneContext getContext() {
 		return context;
 	}
+	
+	public void leaveScene() {
+//		//释放unit begin
+		player.getMap().leavePlayer(player);
+		
+//		//释放前同步下数据
+//		m_player->SyncCacheData();
+//		m_player->SyncUnitToPlayerData();
+//		//释放unit end
+//
+//		//取消更新事件
+//		after_update(nullptr);
+//		//发个离开场景服包给客户端
+//		Call_join_or_leave_server(m_delegate_sendpkt, 1, SERVER_TYPE_SCENED, getpid(), ScenedApp::g_app->Get_Connection_ID(), uint32(time(nullptr)));
+//		//fd置为0
+		context.changeFd(0);
+	}
 }

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cc.mi.core.constance.ObjectType;
+import cc.mi.core.log.CustomLogger;
 import cc.mi.core.manager.MapTemplateManager;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
@@ -15,6 +16,7 @@ import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
 
 public class SceneMap {
+	static final CustomLogger logger = CustomLogger.getLogger(SceneMap.class);
 	
 	static final Map<Integer, ParentMapInfo> allParentMapInfoHash = new HashMap<>();
 	
@@ -411,17 +413,15 @@ public class SceneMap {
 //		internal_protocol_free_packet(dst);	
 //		external_protocol_free_packet(pkt_compress);	
 	}
-//
-//	void Map::SendDeleteBlock(ScenedContext *player)
-//	{
-//		SendDeleteBlock(player->GetFD());
-//	}
-//
-//	void Map::SendDeleteBlock(uint32 fd)
-//	{
-//		if (!fd)
-//			return;
-//
+
+	public void sendDeleteBlock(SceneContextPlayer player) {
+		this.sendDeleteBlock(player.getContext().getFd());
+	}
+
+	public void sendDeleteBlock(int fd) {
+		if (fd == 0) {
+			return;
+		}
 //		m_parent_map_info->WriteReleaseBlock(m_byte_buf);
 //		m_byte_buf.position(0);
 //		ObjMgr.Compress(m_byte_buf);
@@ -436,8 +436,8 @@ public class SceneMap {
 //		ScenedApp::g_app->SendToNetgd(dst);
 //		internal_protocol_free_packet(dst);
 //		external_protocol_free_packet(pkt_compress);	
-//	}
-//
+	}
+
 //	const string Map::CreateNewCreatureID()
 //	{
 //		string guid = g_GuidMgr.MAKE_NEW_GUID(ObjectTypeUnit);
@@ -719,31 +719,29 @@ public class SceneMap {
 //		ScenedContext* session = dynamic_cast<ScenedContext*>(ObjMgr.Get(guid));	
 //		return session?session->GetPlayer():nullptr;
 //	}
-//
-//	void Map::LeavePlayer(Player *player)
-//	{
-//		//当玩家离开地图时,如果有宠物 应该也要触发一下事件
-//		tea_pdebug("player(%s) leave mapid %u,instanceid %u",player->GetGuid().c_str(),GetMapId(),GetInstanceID());
-//		OnLeavePlayer(this,player);
-//
-//		player->OnLeaveMap();	
-//		if(m_grids)
-//		{
-//			m_grids->DelPlayer(player);
-//		}
-//		else
-//		{
-//			tea_pdebug("player(%s) leave mapid , not m_grids",player->GetGuid().c_str());
-//		}
-//		//移除
-//		m_players.erase(player->GetGuid());
+
+	public void leavePlayer(ScenePlayer player) {
+		//当玩家离开地图时,如果有宠物 应该也要触发一下事件
+		logger.devLog("player guid={} leave mapid {},instanceid {}", 
+				player.getGuid(), player.getMapId(), player.getInstanceId());
+		
+		player.onLeaveMap();
+		if (this.gridManager != null) {
+			this.gridManager.delPlayer(player);
+		} else {
+			logger.devLog("player guid={} leave mapid {}, no gridManager", 
+					player.getGuid(), player.getMapId());
+		}
+		
+		//移除
+		playerHash.remove(player.getGuid());
 //		player->SyncUnitToPlayerData();
-//		ASSERT(!player->IsMoving());
-//		if(player->GetSession())
-//			SendDeleteBlock(player->GetSession());
-//		//地图设为空
-//		player->SetMap(nullptr);	
-//		//如果玩家离开的地图不是副本,则记录为数据库坐标
+		if (player.getContextPlayer() != null) {
+			this.sendDeleteBlock(player.getContextPlayer());
+		}
+		//地图设为空
+		player.setMap(null);
+		//如果玩家离开的地图不是副本,则记录为数据库坐标
 //		if (player->isAlive()) {
 //			if((!GetMapTemp()->IsInstance() || DoIsRiskMap(this->GetMapId())) && !player->GetSession()->IsKuafuPlayer()) {
 //				// 如果是从幻境小关卡离开的就记录一个标记就行
@@ -771,8 +769,8 @@ public class SceneMap {
 //			}
 //			player->GetSession()->SetToDBPositon(ZHUCHENG_DITU_ID, x, y);
 //		}
-//	}
-//
+	}
+
 //	void Map::LeaveCreature(Creature *creature)
 //	{
 //		ASSERT(creature);
@@ -994,7 +992,7 @@ public class SceneMap {
 	}
 
 	//删除地图实例
-	public void delMap(int instId) {
+	public static void delMap(int instId) {
 		SceneMap.mapInstHash.remove(instId);
 		SceneMap.allParentMapInfoHash.remove(instId);
 	}
