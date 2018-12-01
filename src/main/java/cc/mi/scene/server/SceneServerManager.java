@@ -33,7 +33,7 @@ import cc.mi.scene.info.WaitJoinInfo;
 public class SceneServerManager extends ServerManager {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneServerManager.class);
 	
-	private static SceneServerManager instance;
+	private static SceneServerManager instance = new SceneServerManager();
 	// 消息收到以后的回调
 	private static final Map<Integer, Handler> handlers = new HashMap<>();
 	private static final List<Integer> opcodes;
@@ -65,15 +65,6 @@ public class SceneServerManager extends ServerManager {
 	}	
 	
 	public static SceneServerManager getInstance() {
-		if (instance == null) {
-			instance = new SceneServerManager();
-			instance.process = new ServerProcessBlock() {
-				@Override
-				public void run(int diff) {
-					instance.doInit();
-				}
-			};
-		}
 		return instance;
 	}
 	
@@ -97,6 +88,13 @@ public class SceneServerManager extends ServerManager {
 				}
 			}
 		}, 1000, 100, TimeUnit.MILLISECONDS);
+		
+		this.process = new ServerProcessBlock() {
+			@Override
+			public void run(int diff) {
+				instance.doInit();
+			}
+		};
 	}
 	
 	/**
@@ -209,7 +207,7 @@ public class SceneServerManager extends ServerManager {
 				contextPlayer = (SceneContextPlayer)this.objManager.get(ownerId);
 			}
 			
-			if (contextPlayer.getTeleportSign() == info.getSign()) {
+			if (contextPlayer != null && contextPlayer.getTeleportSign() == info.getSign()) {
 				logger.devLog("player {} join map [{}] BEGIN", ownerId, info.getMapId());
 				contextPlayer.onTeleportOK(info.getFd(), info.getMapId(), info.getInstId(), info.getX(), info.getY());
 //					//通知网关服

@@ -686,7 +686,7 @@ public final class GridManager {
 		}
 
 		UnitBinlogDataModify ubdm = new UnitBinlogDataModify();
-		ubdm.setFD(fd);
+		ubdm.setBaseFd(fd);
 		ubdm.setUnitBinlogInfoList(ud);
 
 		SceneServerManager.getInstance().sendToGate(ubdm);

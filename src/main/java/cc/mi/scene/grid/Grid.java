@@ -161,7 +161,7 @@ public class Grid {
 		for (ScenePlayer player : players.values()) {
 			
 			UnitBinlogDataModify ubdm = new UnitBinlogDataModify();
-			ubdm.setFD(player.getContextPlayer().getContext().getFd());
+			ubdm.setBaseFd(player.getContextPlayer().getContext().getFd());
 			ubdm.setUnitBinlogInfoList(binlogInfoList);
 			
 			player.getContextPlayer().getContext().sendToGate(ubdm);
