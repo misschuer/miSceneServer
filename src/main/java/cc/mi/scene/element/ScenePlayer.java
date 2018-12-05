@@ -23,8 +23,9 @@ public class ScenePlayer extends SceneElement {
 		return contextPlayer;
 	}
 	
-	public void update(int diff) {
-		super.update(diff);
+	@Override
+	public boolean update(int diff) {
+		return super.update(diff);
 	}
 
 	public CharacterStatistics getCs() {

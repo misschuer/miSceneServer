@@ -14,6 +14,7 @@ import cc.mi.core.callback.Callback;
 import cc.mi.core.constance.SceneElementEnumFields;
 import cc.mi.core.generate.msg.UnitBinlogDataModify;
 import cc.mi.core.generate.stru.UnitBinlogInfo;
+import cc.mi.core.impl.Tick;
 import cc.mi.core.log.CustomLogger;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
@@ -22,7 +23,7 @@ import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.server.SceneMap;
 import cc.mi.scene.server.SceneServerManager;
 
-public final class GridManager {
+public final class GridManager implements Tick {
 	
 	static final CustomLogger logger = CustomLogger.getLogger(GridManager.class);
 
@@ -127,7 +128,7 @@ public final class GridManager {
 		}
 	}
 
-	public void update(int diff) {
+	public boolean update(int diff) {
 		//战利品心跳
 		for (Grid grid : this.grids) {
 			if (grid.getLoot() != null) {
@@ -192,6 +193,8 @@ public final class GridManager {
 //		{
 //			SendFightingBlocks(it);
 //		}
+		
+		return true;
 	 }
 
 	public void addPlayer(ScenePlayer player) {

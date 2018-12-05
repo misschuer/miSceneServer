@@ -1,8 +1,10 @@
 package cc.mi.scene.grid;
 
-public class LootObject {
+import cc.mi.core.impl.Tick;
+
+public class LootObject implements Tick {
 	
-	public void update(int diff) {
-		
+	public boolean update(int diff) {
+		return false;
 	}
 }

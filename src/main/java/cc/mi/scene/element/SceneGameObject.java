@@ -6,7 +6,8 @@ public class SceneGameObject extends SceneElement {
 		super(SceneElement.ELEMENT_TYPE_GAMEOBJECT);
 	}
 
-	public void update(int diff) {
-		super.update(diff);
+	@Override
+	public boolean update(int diff) {
+		return super.update(diff);
 	}
 }

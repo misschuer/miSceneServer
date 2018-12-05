@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cc.mi.core.constance.ObjectType;
+import cc.mi.core.impl.Tick;
 import cc.mi.core.log.CustomLogger;
 import cc.mi.core.manager.MapTemplateManager;
 import cc.mi.core.server.GuidManager;
@@ -15,7 +16,7 @@ import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
 
-public class SceneMap {
+public class SceneMap implements Tick {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneMap.class);
 	
 	static final Map<Integer, ParentMapInfo> allParentMapInfoHash = new HashMap<>();
@@ -1211,5 +1212,11 @@ public class SceneMap {
 	
 	public boolean isValidPosition(int x, int y) {
 		return this.mapTemplate.isValidPosition(x, y);
+	}
+
+	@Override
+	public boolean update(int diff) {
+		
+		return false;
 	}
 }

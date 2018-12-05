@@ -11,6 +11,7 @@ import cc.mi.core.binlog.stru.BinlogStruValueStr;
 import cc.mi.core.constance.BinlogOptType;
 import cc.mi.core.constance.SceneElementEnumFields;
 import cc.mi.core.generate.stru.UnitBinlogInfo;
+import cc.mi.core.impl.Tick;
 import cc.mi.core.log.CustomLogger;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
@@ -18,7 +19,7 @@ import cc.mi.scene.grid.Grid;
 import cc.mi.scene.info.FloatPoint;
 import cc.mi.scene.server.SceneMap;
 
-public abstract class SceneElement extends BinlogData {
+public abstract class SceneElement extends BinlogData implements Tick {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneElement.class);
 	
 	static final int ONE_GRID_PX = 10;
@@ -320,7 +321,7 @@ public abstract class SceneElement extends BinlogData {
 		return this.movingMills != 0;
 	}
 
-	public void update(int diff) {
+	public boolean update(int diff) {
 		if (this.grid != null) {
 //			UpdateSpellTrigger(diff);				//技能触发器更新
 //			GetBuffManager()->Update(diff);
@@ -328,6 +329,8 @@ public abstract class SceneElement extends BinlogData {
 //			UpdateLiveStatus(diff);
 			this.updateLocate(diff);
 		}
+		
+		return true;
 	}
 
 	public boolean updateLocate(int diff) {
