@@ -6,7 +6,8 @@ import cc.mi.core.server.GuidManager;
 import cc.mi.core.server.ServerObjectManager;
 
 public class SceneObjectManager extends ServerObjectManager {
-	protected SceneObjectManager() {
+	public static final SceneObjectManager INSTANCE = new SceneObjectManager();
+	private SceneObjectManager() {
 		super(IdentityConst.SERVER_TYPE_SCENE);
 	}
 

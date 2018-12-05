@@ -5,6 +5,7 @@ import cc.mi.core.handler.HandlerImpl;
 import cc.mi.core.packet.Packet;
 import cc.mi.core.server.ContextManager;
 import cc.mi.core.server.ServerContext;
+import cc.mi.scene.server.SceneObjectManager;
 import cc.mi.scene.server.SceneServerManager;
 import io.netty.channel.Channel;
 
@@ -19,7 +20,7 @@ public class JoinMapHandler extends HandlerImpl {
 		}
 		
 		// 加入地图的时候不能有binlog
-		if (SceneServerManager.getInstance().getObjManager().get(jmm.getOwnerId()) != null) {
+		if (SceneObjectManager.INSTANCE.get(jmm.getOwnerId()) != null) {
 			throw new RuntimeException("owner binlogdata must be null");
 		}
 		

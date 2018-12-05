@@ -28,9 +28,6 @@ public class SceneServerManager extends ServerManager {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneServerManager.class);
 	private static SceneServerManager instance = new SceneServerManager();
 	
-	// 对象管理
-	private final SceneObjectManager objManager = new SceneObjectManager();
-	
 	private final Map<String, WaitJoinInfo> waitJoinHash = new HashMap<>();
 	
 	public static SceneServerManager getInstance() {
@@ -95,7 +92,7 @@ public class SceneServerManager extends ServerManager {
 	
 	public void onBinlogDatasUpdated(List<BinlogInfo> binlogInfoList) {
 		for (BinlogInfo binlogInfo : binlogInfoList) {
-			this.objManager.parseBinlogInfo(binlogInfo);
+			SceneObjectManager.INSTANCE.parseBinlogInfo(binlogInfo);
 		}
 	}
 	
@@ -109,7 +106,7 @@ public class SceneServerManager extends ServerManager {
 	}
 	
 	protected void addTagWatchCallback(String ownerTag, Callback<Void> callback) {
-		objManager.addCreateCallback(ownerTag, callback);
+		SceneObjectManager.INSTANCE.addCreateCallback(ownerTag, callback);
 	}
 	
 	private void doUpdate(int diff) {
@@ -139,8 +136,8 @@ public class SceneServerManager extends ServerManager {
 			String ownerId = entryInfo.getKey();
 			WaitJoinInfo info = entryInfo.getValue();
 			SceneContextPlayer contextPlayer = null;
-			if (this.objManager.contains(ownerId)) {
-				contextPlayer = (SceneContextPlayer)this.objManager.get(ownerId);
+			if (SceneObjectManager.INSTANCE.contains(ownerId)) {
+				contextPlayer = (SceneContextPlayer)SceneObjectManager.INSTANCE.get(ownerId);
 			}
 			
 			if (contextPlayer != null && contextPlayer.getTeleportSign() == info.getSign()) {
@@ -165,9 +162,5 @@ public class SceneServerManager extends ServerManager {
 		for (String guid : removeList) {
 			waitJoinHash.remove(guid);
 		}
-	}
-	
-	public SceneObjectManager getObjManager() {
-		return objManager;
 	}
 }
