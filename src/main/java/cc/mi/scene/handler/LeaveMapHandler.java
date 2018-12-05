@@ -37,10 +37,11 @@ public class LeaveMapHandler extends HandlerImpl {
 		if (contextPlayer != null) {
 //			ObjMgr.SendPlayerBinlog(session);
 		}
-
-//		ObjMgr.CallDelWatch(guid);
+		
+		// 删除监听
 		//为了防止场景切换
-//		ObjMgr.ReleaseObject(guid);
+		SceneServerManager.getInstance().delTagWatch(guid);
+		SceneObjectManager.INSTANCE.releaseObject(guid);
 	}
 
 }

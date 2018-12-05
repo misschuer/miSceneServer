@@ -18,6 +18,14 @@ public class SceneContextPlayer extends PlayerBase {
 		this.context = new SceneContext(0);
 	}
 	
+	/**
+	 * 传送成功
+	 * @param fd
+	 * @param mapId
+	 * @param instId
+	 * @param x
+	 * @param y
+	 */
 	public void onTeleportOK(int fd, int mapId, int instId, float x, float y) {
 		if (this.player != null) {
 			throw new RuntimeException("onTeleportOK ScenePlayer must be null");

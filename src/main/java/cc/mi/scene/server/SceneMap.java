@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import cc.mi.core.constance.ObjectType;
+import cc.mi.core.generate.msg.MapCreateMsg;
+import cc.mi.core.generate.msg.MapDeleteMsg;
 import cc.mi.core.impl.Tick;
 import cc.mi.core.log.CustomLogger;
 import cc.mi.core.manager.MapTemplateManager;
@@ -65,6 +67,7 @@ public class SceneMap implements Tick {
 		if (!allParentMapInfoHash.containsKey(instId)) {
 			
 			this.mapInfo = new ParentMapInfo();
+			this.mapInfo.setBinlogId(GuidManager.INSTANCE.makeNewGuid(ObjectType.MAP));
 			this.mapInfo.setMapId(mapId);
 			this.mapInfo.setInstId(instId);
 			this.mapInfo.setLineNo(lineNo);
@@ -389,30 +392,28 @@ public class SceneMap implements Tick {
 //		if(m_is_close_respawn) return;
 //		m_player_respawn.push_back(player->GetUIntGuid());
 //	}
-
+	
+	/**
+	 * 发送地图数据
+	 * @param contextPlayer
+	 */
 	public void sendCreateBlock(SceneContextPlayer contextPlayer) {
 		this.sendCreateBlock(contextPlayer.getContext().getFd());
 	}
 
+	/**
+	 * 发送地图数据
+	 * @param contextPlayer
+	 */
 	public void sendCreateBlock(int fd) {
-		
 		if (fd == 0) {
 			return;
 		}
-//		m_parent_map_info->WriteCreateBlock(m_byte_buf);
-//		m_byte_buf.position(0);
-//		ObjMgr.Compress(m_byte_buf);
-//		m_byte_buf.position(0);
-//		packet *pkt_compress = external_protocol_new_packet(SMSG_MAP_UPDATE_OBJECT);
-//		packet_write(pkt_compress,(char*)m_byte_buf.cur_data(),m_byte_buf.bytesAvailable());
-//		m_byte_buf.clear();
-//		update_packet_len(pkt_compress);
-//		pkt_compress->cid = fd;
-//		server_packet *dst = NULL;
-//		pack_packet_gate(&dst, pkt_compress);
-//		ScenedApp::g_app->SendToNetgd(dst);
-//		internal_protocol_free_packet(dst);	
-//		external_protocol_free_packet(pkt_compress);	
+		
+		MapCreateMsg packet = new MapCreateMsg();
+		packet.setBaseFd(fd);
+		packet.setMapInfo(mapInfo.toSendMapInfo());
+		SceneServerManager.getInstance().sendToGate(packet);
 	}
 
 	public void sendDeleteBlock(SceneContextPlayer player) {
@@ -423,20 +424,11 @@ public class SceneMap implements Tick {
 		if (fd == 0) {
 			return;
 		}
-//		m_parent_map_info->WriteReleaseBlock(m_byte_buf);
-//		m_byte_buf.position(0);
-//		ObjMgr.Compress(m_byte_buf);
-//		m_byte_buf.position(0);
-//		packet *pkt_compress = external_protocol_new_packet(SMSG_MAP_UPDATE_OBJECT);
-//		packet_write(pkt_compress,(char*)m_byte_buf.cur_data(),m_byte_buf.bytesAvailable());
-//		m_byte_buf.clear();
-//		update_packet_len(pkt_compress);
-//		pkt_compress->cid = fd;
-//		server_packet *dst = NULL;
-//		pack_packet_gate(&dst, pkt_compress);
-//		ScenedApp::g_app->SendToNetgd(dst);
-//		internal_protocol_free_packet(dst);
-//		external_protocol_free_packet(pkt_compress);	
+		
+		MapDeleteMsg packet = new MapDeleteMsg();
+		packet.setBaseFd(fd);
+		packet.setBinlogId(this.mapInfo.getBinlogId());
+		SceneServerManager.getInstance().sendToGate(packet);
 	}
 
 //	const string Map::CreateNewCreatureID()

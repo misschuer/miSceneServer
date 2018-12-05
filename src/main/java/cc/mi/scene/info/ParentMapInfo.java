@@ -1,6 +1,10 @@
 package cc.mi.scene.info;
 
+import cc.mi.core.generate.stru.MapInfo;
+
 public class ParentMapInfo {
+	// 地图唯一id
+	protected String binlogId;
 	// 地图id
 	protected int mapId;
 	// 实例id
@@ -62,5 +66,25 @@ public class ParentMapInfo {
 
 	public void setExt(String ext) {
 		this.ext = ext;
+	}
+	
+	public MapInfo toSendMapInfo() {
+		MapInfo info = new MapInfo();
+		info.setBinlogId(this.binlogId);
+		info.setCreateTime(this.createTime);
+		info.setExt(this.ext);
+		info.setInstId(this.instId);
+		info.setInstType(this.instType);
+		info.setLineNo(this.lineNo);
+		info.setMapId(this.mapId);
+		return info;
+	}
+
+	public String getBinlogId() {
+		return binlogId;
+	}
+
+	public void setBinlogId(String binlogId) {
+		this.binlogId = binlogId;
 	}
 }
