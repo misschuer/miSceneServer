@@ -106,7 +106,7 @@ public class SceneServerManager extends ServerManager {
 	}
 	
 	protected void addTagWatchCallback(String ownerTag, Callback<Void> callback) {
-		SceneObjectManager.INSTANCE.addCreateCallback(ownerTag, callback);
+		SceneObjectManager.INSTANCE.addOwnerCreateCallback(ownerTag, callback);
 	}
 	
 	private void doUpdate(int diff) {
