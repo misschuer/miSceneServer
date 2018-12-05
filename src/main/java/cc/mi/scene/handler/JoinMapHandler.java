@@ -15,7 +15,7 @@ public class JoinMapHandler extends HandlerImpl {
 		
 		JoinMapMsg jmm = (JoinMapMsg) decoder;
 		// 加入地图的时候不能有context
-		if (ContextManager.getContext(jmm.getFd()) != null) {
+		if (ContextManager.INSTANCE.getContext(jmm.getFd()) != null) {
 			throw new RuntimeException("scene context must be null");
 		}
 		
