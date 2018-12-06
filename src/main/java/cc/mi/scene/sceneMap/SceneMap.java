@@ -14,11 +14,14 @@ import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
 import cc.mi.core.utils.TimestampUtils;
 import cc.mi.core.xlsxData.MapGameobject;
+import cc.mi.core.xlsxData.MapMonster;
 import cc.mi.core.xlsxData.MapTeleport;
 import cc.mi.core.xlsxData.MapTemplate;
 import cc.mi.scene.config.ServerConfig;
+import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneGameObject;
 import cc.mi.scene.element.ScenePlayer;
+import cc.mi.scene.element.SceneTeleport;
 import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
 import cc.mi.scene.server.SceneContextPlayer;
@@ -159,32 +162,34 @@ public class SceneMap implements Tick {
 			this.gridManager = new GridManager(this, width, heigth);
 		}
 		
+		// 刷传送点
 		this.mapTemplate.foreachTeleport(new AbstractCallback<MapTeleport>() {
 			@Override
 			public void invoke(MapTeleport value) {
-				
+				SceneTeleport tele = new SceneTeleport(value.getToX(), value.getToY(), value.getToMapId(), value.getToName());
+				if (tele.create(self.createUnitBinlogId(), value.getTemplateId())) {
+					tele.setMap(self);
+					tele.setInstanceId(self.instId);
+					tele.setPosition(value.getX(), value.getY());
+					
+					self.addGameObject(tele);
+				}
 			}
 		});
 		
-		// 刷传送点
-//		for (auto iter_t = m_template->m_teleport.begin()
-//			;iter_t!=m_template->m_teleport.end();++iter_t)
-//		{		
-//			GameObject *tele = new GameObject;		
-//			tele->Create(Map::CreateNewCreatureID(),iter_t->temp_id);
-//			ASSERT(tele->IsTeleteport());			
-//
-//			tele->SetName(iter_t->name);
-//			tele->SetMapId(GetMapId());
-//			tele->SetInstanceId(GetInstanceID());
-//			tele->SetPosition((float)iter_t->x,(float)iter_t->y);
-//
-//			tele->SetToPositionX(float(iter_t->to_x));
-//			tele->SetToPositionY(float(iter_t->to_y));
-//			tele->SetToMapId(iter_t->to_mapid);
-//
-//			AddGameObject(tele);
-//		}
+		this.mapTemplate.foreachMonster(new AbstractCallback<MapMonster>() {
+			@Override
+			public void invoke(MapMonster value) {
+				self.newCreature(
+						value.getTemplateid(), 
+						value.getX(), 
+						value.getY(), 
+						value.getToward(), 
+						value.getMoveType(), 
+						value.getSpawnType(), 
+						value.getRespawnTime());
+			}
+		});
 //
 //		//刷怪	
 //		for (auto iter = m_template->m_monsters.begin();
@@ -595,24 +600,15 @@ public class SceneMap implements Tick {
 //		m_worldObject_toadd.push_back(creature);
 //		return true;
 //	}
-//
-//	Creature *Map::AddCreature(uint32 templateid,float x,float y,float toward/* = 0*/,uint32 respan_time /*= 0*/,uint32 movetype/*=0*/, uint32 npcflag/* = 0*/,const char *alias_name /*= NULL*/,bool active_grid /*= false*/,uint8 faction/*= 0*/,const char* ainame/* = 0*/, uint32 level/* = 0*/, uint32 attackType/* = 0*/, uint32 riskId/* = 0*/)
-//	{
-//		string lguid = CreateNewCreatureID();
-//		Creature *new_creature = new Creature;
-//		new_creature->SetUInt32(UNIT_INT_FIELD_RISK_CREATURE_ID, riskId);
-//		creature_template *temp = creature_template_db[templateid];
-//		if (movetype == uint32(-1)) {
-//			movetype = temp->move_type;
-//		}
-//		//需要确保地图怪物刷新点不删除		
-//		if(!new_creature->Create(this,lguid,templateid,respan_time,movetype,ainame,level, attackType))
-//		{
-//			safe_delete(new_creature);
-//			return NULL;
-//		}
-//
-//		
+
+	private SceneCreature newCreature(int entry, float x, float y, float toward, int moveType, int spawnType, int respawnTime) {
+		SceneCreature creature = new SceneCreature();
+		
+		if (!creature.create(this.createUnitBinlogId(), entry)) {
+			return null;
+		}
+		
+		
 //		if (temp->npcflag == 0 && temp->monster_type == 1) {
 //			new_creature->SetUnitFlags(UNIT_FIELD_FLAGS_IS_BOSS_CREATURE);
 //		}
@@ -636,8 +632,8 @@ public class SceneMap implements Tick {
 //			safe_delete(new_creature);
 //			return NULL;
 //		}
-//		return new_creature;
-//	}
+		return creature;
+	}
 //
 //	Creature *Map::AddCreatureTravelers(string &data,float x,float y, uint32 movetype,const char *alias_name)
 //	{

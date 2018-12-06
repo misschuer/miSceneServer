@@ -16,6 +16,11 @@ public class SceneGameObject extends SceneElement {
 		// 初始化
 		super.onInit(binlogId, entry);
 		// 设置属性
+		// name 等
 		return true;
+	}
+	
+	public boolean isTeleport() {
+		return false;
 	}
 }
