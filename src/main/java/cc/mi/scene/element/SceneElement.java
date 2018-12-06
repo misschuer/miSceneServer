@@ -87,6 +87,13 @@ public abstract class SceneElement extends BinlogData implements Tick {
 		this.setUInt8(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO, (short) 0, elementType);
 	}
 	
+	
+	public void onInit(String binlogId, int entry) {
+		this.setElementGuid(binlogId);
+		this.setEntry(entry);
+		// 看看还需要怎么处理
+	}
+	
 	public void setElementGuid(String guid) {
 		this.setGuid(guid);
 		intGuid = GuidManager.INSTANCE.getElementIntGuid(guid);

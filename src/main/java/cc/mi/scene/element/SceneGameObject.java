@@ -10,4 +10,12 @@ public class SceneGameObject extends SceneElement {
 	public boolean update(int diff) {
 		return super.update(diff);
 	}
+	
+	public boolean create(String binlogId, int entry) {
+		// TODO:先判断entry是否存在表中
+		// 初始化
+		super.onInit(binlogId, entry);
+		// 设置属性
+		return true;
+	}
 }

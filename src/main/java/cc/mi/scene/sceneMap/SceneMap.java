@@ -3,6 +3,7 @@ package cc.mi.scene.sceneMap;
 import java.util.HashMap;
 import java.util.Map;
 
+import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.constance.ObjectType;
 import cc.mi.core.generate.msg.MapCreateMsg;
 import cc.mi.core.generate.msg.MapDeleteMsg;
@@ -12,8 +13,11 @@ import cc.mi.core.manager.MapTemplateManager;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
 import cc.mi.core.utils.TimestampUtils;
+import cc.mi.core.xlsxData.MapGameobject;
+import cc.mi.core.xlsxData.MapTeleport;
 import cc.mi.core.xlsxData.MapTemplate;
 import cc.mi.scene.config.ServerConfig;
+import cc.mi.scene.element.SceneGameObject;
 import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
@@ -48,6 +52,9 @@ public class SceneMap implements Tick {
 	protected boolean isBroadcastMap = false;
 	// 是否关闭复活
 	protected boolean isCloseRespawnMap = false;
+	
+	// 场景对象字典
+	private final Map<String, SceneGameObject> gameObjectMap = new HashMap<>();	
 	
 	
 	public SceneMap(int mapId, int instId, int lineNo, String ext) {
@@ -114,8 +121,12 @@ public class SceneMap implements Tick {
 //		protected boolean isCloseRespawnMap = false;
 	}
 	
+	public String createUnitBinlogId() {
+		return GuidManager.INSTANCE.makeNewGuid(ObjectType.UNIT);
+	}
+	
 	private boolean load() {
-		
+		final SceneMap self = this;
 		//初始化地图坐标的使用状态
 		int width  = this.mapTemplate.getBaseInfo().getWidth();
 		int heigth = this.mapTemplate.getBaseInfo().getHeight();
@@ -148,7 +159,14 @@ public class SceneMap implements Tick {
 			this.gridManager = new GridManager(this, width, heigth);
 		}
 		
-//		//m_teleports
+		this.mapTemplate.foreachTeleport(new AbstractCallback<MapTeleport>() {
+			@Override
+			public void invoke(MapTeleport value) {
+				
+			}
+		});
+		
+		// 刷传送点
 //		for (auto iter_t = m_template->m_teleport.begin()
 //			;iter_t!=m_template->m_teleport.end();++iter_t)
 //		{		
@@ -182,23 +200,20 @@ public class SceneMap implements Tick {
 //				iter->second.alias_name);
 //		}
 //
-//		//刷游戏对象	
-//		for (auto iter = m_template->m_gameobjects.begin();
-//			iter != m_template->m_gameobjects.end();++iter)
-//		{
-//			GameObject *go = new GameObject;		
-//			bool b = go->Create(Map::CreateNewCreatureID(),iter->templateid);
-//			if(b){
-//				go->SetPosition(float(iter->x),float(iter->y));	
-//				go->SetOrientation(iter->toward);
-//				AddGameObject(go);
-//			}
-//			else
-//			{
-//				delete go;
-//			}
-//		}	
-//
+		
+		//刷游戏对象
+		this.mapTemplate.foreachGameObject(new AbstractCallback<MapGameobject>() {
+			@Override
+			public void invoke(MapGameobject value) {
+				SceneGameObject sgo = new SceneGameObject();
+				if (sgo.create(self.createUnitBinlogId(), value.getTemplateid())) {
+					sgo.setPosition(value.getX(), value.getY());
+					sgo.setOrient(value.getToward());
+					self.addGameObject(sgo);
+				}
+			}
+		});
+		
 //		//为了便于脚本取生物对象,这一帧就直接处理玩完加入
 //		UpdateRespan(0);
 //
@@ -517,26 +532,19 @@ public class SceneMap implements Tick {
 		
 	}
 
-//	void Map::AddGameObject(GameObject *go)
-//	{
-//		ASSERT(go);	
-//		go->SetMap(this);
-//		go->SetMapId(GetMapId());
-//		go->SetInstanceId(GetInstanceID());
-//
-//		//判断是否重复ADD
-//		ASSERT(m_gameobjects.find(go->GetGuid()) == m_gameobjects.end() || m_gameobjects.find(go->GetGuid())->second != go);
-//		//判断GUID是否重复
-//		ASSERT(m_gameobjects.find(go->GetGuid()) == m_gameobjects.end());
-//
-//		m_grids->AddWorldObject(go);
-//		m_gameobjects[go->GetGuid()] = go;
-//
-//		//if (go->IsDynamic())
-//		//{
-//		//	m_go_dynamic.push_back(std::make_pair(g_Config.loot_exist_timer + go->GetInt32(GO_LOOT_EXIST_TIME_FLOAT) * 1000, go->GetGuid()));
-//		//}	
-//	}
+	public void addGameObject(SceneGameObject sgo) {
+		sgo.setMap(this);
+		sgo.setInstanceId(this.instId);
+
+		//判断GUID是否重复
+		if (this.gameObjectMap.containsKey(sgo.getGuid())) {
+			return;
+		}
+
+		this.gridManager.addWorldObject(sgo);
+		this.gameObjectMap.put(sgo.getGuid(), sgo);
+	}
+
 //
 //	//设置战利品网格
 //	void Map::SetMapSite(float x, float y)
