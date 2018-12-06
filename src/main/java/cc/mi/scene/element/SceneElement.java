@@ -17,7 +17,7 @@ import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
 import cc.mi.scene.grid.Grid;
 import cc.mi.scene.info.FloatPoint;
-import cc.mi.scene.server.SceneMap;
+import cc.mi.scene.sceneMap.SceneMap;
 
 public abstract class SceneElement extends BinlogData implements Tick {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneElement.class);

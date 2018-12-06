@@ -4,7 +4,7 @@ import cc.mi.core.generate.msg.DeleteMap;
 import cc.mi.core.handler.HandlerImpl;
 import cc.mi.core.packet.Packet;
 import cc.mi.core.server.ServerContext;
-import cc.mi.scene.server.SceneMap;
+import cc.mi.scene.sceneMap.SceneMap;
 import io.netty.channel.Channel;
 
 public class DeleteMapHandler extends HandlerImpl {

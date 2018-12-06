@@ -18,7 +18,7 @@ import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.SceneGameObject;
 import cc.mi.scene.element.ScenePlayer;
-import cc.mi.scene.server.SceneMap;
+import cc.mi.scene.sceneMap.SceneMap;
 
 public class Grid {
 	static final CustomLogger logger = CustomLogger.getLogger(Grid.class);

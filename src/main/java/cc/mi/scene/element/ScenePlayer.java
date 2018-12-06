@@ -6,8 +6,8 @@ import cc.mi.core.binlog.callback.BinlogUpdateCallback;
 import cc.mi.core.binlog.callbackParam.BinlogUpdateCallbackParam;
 import cc.mi.core.constance.BinlogOptType;
 import cc.mi.scene.info.CharacterStatistics;
+import cc.mi.scene.sceneMap.SceneMap;
 import cc.mi.scene.server.SceneContextPlayer;
-import cc.mi.scene.server.SceneMap;
 
 public class ScenePlayer extends SceneElement {
 	

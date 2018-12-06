@@ -5,6 +5,7 @@ import cc.mi.core.log.CustomLogger;
 import cc.mi.core.server.PlayerBase;
 import cc.mi.core.server.SessionStatus;
 import cc.mi.scene.element.ScenePlayer;
+import cc.mi.scene.sceneMap.SceneMap;
 
 public class SceneContextPlayer extends PlayerBase {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneContextPlayer.class);

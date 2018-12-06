@@ -1,4 +1,4 @@
-package cc.mi.scene.server;
+package cc.mi.scene.sceneMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +17,9 @@ import cc.mi.scene.config.ServerConfig;
 import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.grid.GridManager;
 import cc.mi.scene.info.ParentMapInfo;
+import cc.mi.scene.server.SceneContextPlayer;
+import cc.mi.scene.server.SceneInstanceMap;
+import cc.mi.scene.server.SceneServerManager;
 
 public class SceneMap implements Tick {
 	static final CustomLogger logger = CustomLogger.getLogger(SceneMap.class);
@@ -52,9 +55,6 @@ public class SceneMap implements Tick {
 //		,m_can_recovry(true),m_script_callback_key(0),m_parent(0),m_end_time(0)
 //		,m_broadcast_nogrid(false),m_is_close_respawn(false),m_can_castspell(true)
 		
-//		m_template = MapTemplate::GetMapTempalte(mapid);
-//		ASSERT(m_template);	
-		
 		this.mapId  =  mapId;
 		this.instId = instId;
 		this.lineNo = lineNo;
@@ -72,7 +72,8 @@ public class SceneMap implements Tick {
 			this.mapInfo.setInstId(instId);
 			this.mapInfo.setLineNo(lineNo);
 			this.mapInfo.setCreateTime(TimestampUtils.now());
-			this.mapInfo.setInstType(this.mapTemplate.getBaseInfo().getType());
+			// TODO:需要读表
+//			this.mapInfo.setInstType(this.mapTemplate.getBaseInfo().getType());
 			
 			allParentMapInfoHash.put(instId, this.mapInfo);
 		} else {
@@ -102,8 +103,11 @@ public class SceneMap implements Tick {
 		
 		return true;
 	}
-	
-	private void doGetInitMapData() {
+
+	/**
+	 * 需要被重载
+	 */
+	protected void doGetInitMapData() {
 //		// 是否全图grid
 //		protected boolean isBroadcastMap = false;
 //		// 是否关闭复活
