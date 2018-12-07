@@ -14,6 +14,8 @@ import cc.mi.core.log.CustomLogger;
 import cc.mi.core.manager.MapTemplateManager;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
+import cc.mi.core.utils.TimerIntervalCallback;
+import cc.mi.core.utils.TimerTimestampCallback;
 import cc.mi.core.utils.TimestampUtils;
 import cc.mi.core.xlsxData.MapGameobject;
 import cc.mi.core.xlsxData.MapMonster;
@@ -66,7 +68,13 @@ public class SceneMap implements Tick {
 	
 	// 待加入的元素列表
 	private final List<SceneElement> toBeAddedElementList = new LinkedList<>();
+	// 待删除的生物列表
+	private final List<SceneCreature> toBeDeleteCreatureList = new LinkedList<>();
 	
+	// 循环定时器
+	private final Map<Integer, TimerIntervalCallback> intervalCallbackList = new HashMap<>();
+	// 时间戳定时器
+	private final Map<Integer, TimerTimestampCallback> timestampCallbackList = new HashMap<>();
 	
 	public SceneMap(int mapId, int instId, int lineNo, String ext) {
 //		m_parent_map_info(0),m_template(NULL),m_grids(NULL),m_is_can_jump(true)
@@ -279,51 +287,6 @@ public class SceneMap implements Tick {
 		SceneServerManager.getInstance().sendToGate(packet);
 	}
 
-//	const string Map::CreateNewCreatureID()
-//	{
-//		string guid = g_GuidMgr.MAKE_NEW_GUID(ObjectTypeUnit);
-//		return guid;
-//	};
-//
-//	bool Map::IsCanRun(float x, float y)
-//	{
-//		////四舍五入先
-//		if(x < 0.00f || y < 0.00f) return false;
-//		uint16 integer_x = uint16(x); 
-//		uint16 integer_y = uint16(y);
-//		//首先不能超出地图范围
-//		if( x < 0.0f || x >= float(m_template->m_baseinfo.width))
-//			return false;
-//		if( y < 0.0f || y >= float(m_template->m_baseinfo.height))
-//			return false;
-//		////也不能是障碍点
-//		return m_template->IsCanRun(integer_x,integer_y);
-//	}
-//
-//	bool Map::IsRightCoord(float x,float y)
-//	{
-//		//首先不能超出地图范围
-//		if( x < 0.0f || x >= float(m_template->m_baseinfo.width))
-//			return false;
-//		if( y < 0.0f || y >= float(m_template->m_baseinfo.height))
-//			return false;
-//		return true;
-//	}
-//
-//	bool Map::isValidPosition(float x,float y)
-//	{
-//		////四舍五入先
-//		if(x < 0.00f || y < 0.00f) return false;
-//		uint16 integer_x = uint16(x); 
-//		uint16 integer_y = uint16(y);
-//		//首先不能超出地图范围
-//		if( x < 0.0f || x >= float(m_template->m_baseinfo.width))
-//			return false;
-//		if( y < 0.0f || y >= float(m_template->m_baseinfo.height))
-//			return false;
-//		return true;
-//	}
-
 	public void joinPlayer(ScenePlayer player) {
 		
 		if (player.getInstanceId() != 0) {
@@ -499,14 +462,14 @@ public class SceneMap implements Tick {
 //
 //		return new_creature;
 //	}
-//
-//	void Map::ToDelCreature(Creature *creature)
-//	{	
-//		//要把生物指针还给地图管理
-//		if(creature->GetHostGUID())			
-//			creature->SetHostGUID(NULL);	
-//		m_to_del_creature.insert(creature);
-//	}
+	
+	public void toDelCreature(SceneCreature creature) {
+		//要把生物指针还给地图管理
+		if (creature.getHost() != null) {
+			creature.setHost(null);
+		}
+		this.toBeDeleteCreatureList.add(creature);
+	}
 //
 //	Creature* Map::FindCreature(uint32 guid)	
 //	{	
@@ -607,17 +570,13 @@ public class SceneMap implements Tick {
 //		}
 	}
 
-//	void Map::LeaveCreature(Creature *creature)
-//	{
-//		ASSERT(creature);
-//		if(creature->GetGrid())
-//			m_grids->DelWorldObject(creature);		
-//		m_alive_creatures.erase(creature->GetGuid());	
-//		
-//		if(!creature->GetAliasName().empty())
-//			DelAliasCreature(creature);	
-//	}
-//
+	public void leaveCreature(SceneCreature creature) {
+		if(creature.getGrid() != null) {
+			this.gridManager.delWorldObject(creature);
+		}
+		this.creatureMap.remove(creature.getGuid());
+	}
+
 //	//初始化场次id和跨服id
 //	void Map::InitWaridAndKuafuType(ScenedContext* session)
 //	{
@@ -1055,73 +1014,53 @@ public class SceneMap implements Tick {
 
 	@Override
 	public boolean update(int diff) {
-		
+		// 网格对象更新
 		this.gridManager.update(diff);
-		
+		// 元素对象更新
 		this.updateSceneElement(diff);
-//		//跑定时器
-//		if(diff < 1000 && !m_script_callbacks.empty() && !m_state_script.empty())
-//		{
-//			for(ScriptCBList::iterator it = m_script_callbacks.begin(); it != m_script_callbacks.end();)
-//			{
-//				script_timer_callback *stc = *it;
-//
-//				if(stc->invalid == 1)//已被删除
-//				{
-//					m_script_callbacks.erase(it++);
-//					free(stc);
-//					continue;
-//				}
-//				if(stc->is_new == 1)//下一帧再执行
-//				{
-//					stc->is_new = 0;
-//				}
-//				else
-//				{
-//					stc->timer.Update(diff);
-//					if(stc->timer.Passed())
-//					{
-//						if(DOTimerTickCallBack(this, stc->s_callback, stc->param1) == 0)
-//							stc->invalid = 1;
-//						stc->timer.Reset2();
-//					}
-//				}
-//				++it;
-//			}
-//		}
-//
-//		//跑定时器
-//		if(!m_script_timestamp_callbacks.empty())
-//		{
-//			for(ScriptTimeStampList::iterator it = m_script_timestamp_callbacks.begin(); it != m_script_timestamp_callbacks.end();)
-//			{
-//				script_timestamp_timer_callback *stc = *it;
-//
-//				if(stc->invalid == 1)//已被删除
-//				{
-//					m_script_timestamp_callbacks.erase(it++);
-//					free(stc);
-//					continue;
-//				}
-//				if(stc->is_new == 1)//下一帧再执行
-//				{
-//					stc->is_new = 0;
-//				}
-//				else
-//				{	
-//					if(stc->timestamp > 0 && (uint32)time(NULL) >= stc->timestamp)
-//					{
-//						DOTimerTickCallBack(this, stc->s_callback, stc->param1);
-//						stc->invalid = 1;					
-//					}
-//					else if (stc->timestamp == 0)
-//					{
-//						stc->invalid = 1;
-//					}
-//				}
-//				++it;
-//			}
-//		}
+		
+		// 跑区间定时器
+		if(diff < 1000 && !this.intervalCallbackList.isEmpty()) {
+			List<Integer> delList = new LinkedList<>();
+			for (TimerIntervalCallback cb : this.intervalCallbackList.values()) {
+				if (!cb.isAvailable()) {
+					delList.add(cb.getId());
+					continue;
+				}
+				
+				if (cb.isNew()) {
+					cb.setNew(false);
+				} else {
+					boolean cont = cb.invokeIfTimerPassed(diff);
+					if (!cont) {
+						delList.add(cb.getId());
+					}
+				}
+			}
+			
+			for (int id : delList) {
+				this.intervalCallbackList.remove(id);
+			}
+		}
+		
+		// 跑时间戳定时器
+		if(!this.timestampCallbackList.isEmpty()) {
+			List<Integer> delList = new LinkedList<>();
+			for (TimerTimestampCallback cb : this.timestampCallbackList.values()) {
+				if (!cb.isAvailable()) {
+					delList.add(cb.getId());
+					continue;
+				}
+				
+				if (!cb.invokeIfTimerPassed()) {
+					delList.add(cb.getId());
+				}
+			}
+			
+			for (int id : delList) {
+				this.timestampCallbackList.remove(id);
+			}
+		}
 //
 //		//处理需要复活的游戏对象，在玩家那跳心跳 好处不必要的可以不进数组
 //		for (PlayerRespawnList::iterator it_p = m_player_respawn.begin();
@@ -1169,24 +1108,15 @@ public class SceneMap implements Tick {
 			}
 			this.toBeAddedElementList.clear();
 		}
-//
-//		//处理只刷一次的生物对象
-//		if(!m_to_del_creature.empty())
-//		{
-//			for (CreatureSet::iterator it = m_to_del_creature.begin();
-//				it != m_to_del_creature.end();++it)
-//			{
-//				/*m_grids->DelWorldObject(*it);		
-//				m_alive_creatures.erase((*it)->GetGuid());			
-//				if(!(*it)->m_alias_name.empty())
-//					DelAliasCreature(*it);*/
-//				LeaveCreature(*it);		
-//
-//				delete *it;
-//			}
-//			m_to_del_creature.clear();	
-//		}	
-//
+		
+		//处理只刷一次的生物对象
+		if (!this.toBeDeleteCreatureList.isEmpty()) {
+			for (SceneCreature creature : this.toBeDeleteCreatureList) {
+				this.leaveCreature(creature);
+			}
+			this.toBeDeleteCreatureList.clear();
+		}
+		
 //		//处理需要删掉的游戏对象,动态对象全部由此管理,暂时只有战利品
 //		for (GameObjectRespawnList::iterator it = m_go_dynamic.begin();
 //			it != m_go_dynamic.end();)

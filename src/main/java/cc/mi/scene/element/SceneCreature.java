@@ -11,6 +11,8 @@ public class SceneCreature extends SceneElement {
 	private int respawnType;
 	// 复活时间
 	private int respawnTime;
+	// 主人guid
+	private String host = null;
 	
 	public SceneCreature() {
 		super(SceneElement.ELEMENT_TYPE_CREATURE);
@@ -98,5 +100,13 @@ public class SceneCreature extends SceneElement {
 	@Override
 	public boolean isCreature() {
 		return true;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
 	}
 }
