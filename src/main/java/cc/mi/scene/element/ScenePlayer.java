@@ -115,4 +115,8 @@ public class ScenePlayer extends SceneElement {
 		//TODO: 场景对象同步到玩家对象
 	}
 	
+	@Override
+	public boolean isPlayer() {
+		return true;
+	}
 }

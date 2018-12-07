@@ -1,6 +1,8 @@
 package cc.mi.scene.sceneMap;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import cc.mi.core.callback.AbstractCallback;
@@ -19,6 +21,7 @@ import cc.mi.core.xlsxData.MapTeleport;
 import cc.mi.core.xlsxData.MapTemplate;
 import cc.mi.scene.config.ServerConfig;
 import cc.mi.scene.element.SceneCreature;
+import cc.mi.scene.element.SceneElement;
 import cc.mi.scene.element.SceneGameObject;
 import cc.mi.scene.element.ScenePlayer;
 import cc.mi.scene.element.SceneTeleport;
@@ -58,6 +61,11 @@ public class SceneMap implements Tick {
 	
 	// 场景对象字典
 	private final Map<String, SceneGameObject> gameObjectMap = new HashMap<>();	
+	// 怪物对象
+	private final Map<String, SceneCreature> creatureMap = new HashMap<>();
+	
+	// 待加入的元素列表
+	private final List<SceneElement> toBeAddedElementList = new LinkedList<>();
 	
 	
 	public SceneMap(int mapId, int instId, int lineNo, String ext) {
@@ -177,6 +185,7 @@ public class SceneMap implements Tick {
 			}
 		});
 		
+		//刷怪
 		this.mapTemplate.foreachMonster(new AbstractCallback<MapMonster>() {
 			@Override
 			public void invoke(MapMonster value) {
@@ -190,21 +199,6 @@ public class SceneMap implements Tick {
 						value.getRespawnTime());
 			}
 		});
-//
-//		//刷怪	
-//		for (auto iter = m_template->m_monsters.begin();
-//			iter!=m_template->m_monsters.end();++iter)
-//		{
-//			creature_template *temp = creature_template_db[iter->second.templateid];
-//			uint32 rebornTime = temp->rebornTime;
-//			AddCreature(iter->second.templateid,
-//				float(iter->second.x),float(iter->second.y),float(iter->second.toward),
-//				rebornTime,
-//				-1,
-//				iter->second.flag,
-//				iter->second.alias_name);
-//		}
-//
 		
 		//刷游戏对象
 		this.mapTemplate.foreachGameObject(new AbstractCallback<MapGameobject>() {
@@ -239,176 +233,6 @@ public class SceneMap implements Tick {
 		return mapId;
 	}
 
-//	void Map::Update(uint32 diff)
-//	{	
-//		ASSERT(m_grids);
-//		m_grids->Update(diff);
-//
-//		UpdateRespan(diff);	
-//
-//		//跑定时器
-//		if(diff < 1000 && !m_script_callbacks.empty() && !m_state_script.empty())
-//		{
-//			for(ScriptCBList::iterator it = m_script_callbacks.begin(); it != m_script_callbacks.end();)
-//			{
-//				script_timer_callback *stc = *it;
-//
-//				if(stc->invalid == 1)//已被删除
-//				{
-//					m_script_callbacks.erase(it++);
-//					free(stc);
-//					continue;
-//				}
-//				if(stc->is_new == 1)//下一帧再执行
-//				{
-//					stc->is_new = 0;
-//				}
-//				else
-//				{
-//					stc->timer.Update(diff);
-//					if(stc->timer.Passed())
-//					{
-//						if(DOTimerTickCallBack(this, stc->s_callback, stc->param1) == 0)
-//							stc->invalid = 1;
-//						stc->timer.Reset2();
-//					}
-//				}
-//				++it;
-//			}
-//		}
-//
-//		//跑定时器
-//		if(!m_script_timestamp_callbacks.empty())
-//		{
-//			for(ScriptTimeStampList::iterator it = m_script_timestamp_callbacks.begin(); it != m_script_timestamp_callbacks.end();)
-//			{
-//				script_timestamp_timer_callback *stc = *it;
-//
-//				if(stc->invalid == 1)//已被删除
-//				{
-//					m_script_timestamp_callbacks.erase(it++);
-//					free(stc);
-//					continue;
-//				}
-//				if(stc->is_new == 1)//下一帧再执行
-//				{
-//					stc->is_new = 0;
-//				}
-//				else
-//				{	
-//					if(stc->timestamp > 0 && (uint32)time(NULL) >= stc->timestamp)
-//					{
-//						DOTimerTickCallBack(this, stc->s_callback, stc->param1);
-//						stc->invalid = 1;					
-//					}
-//					else if (stc->timestamp == 0)
-//					{
-//						stc->invalid = 1;
-//					}
-//				}
-//				++it;
-//			}
-//		}
-//
-//		//处理需要复活的游戏对象，在玩家那跳心跳 好处不必要的可以不进数组
-//		for (PlayerRespawnList::iterator it_p = m_player_respawn.begin();
-//			it_p != m_player_respawn.end();)
-//		{
-//			Player *player = FindPlayer(*it_p);
-//			if (player && !player->isAlive())
-//			{
-//				//TODO:这里可以根据策划要求写复活逻辑
-//				player->Respawn();
-//				player->DoIfNeedAddProtectBuff();
-//			}
-//			if (player && player->isAlive())
-//				it_p = m_player_respawn.erase(it_p);
-//			else
-//				++it_p;
-//		}
-//
-//		//TODO: 如果效率不行再说 => 处理需要gameobject
-//		for (GameObjectMap::iterator iter = m_gameobjects.begin();iter != m_gameobjects.end();++iter)
-//		{
-//			if (!iter->second) {
-//				return;
-//			}
-//			iter->second->UpdateLiveStatus(diff);
-//		}
-//	}
-//
-//	void Map::UpdateRespan(uint32 diff)	
-//	{
-//		//将待插入grid的
-//		if(!m_worldObject_toadd.empty())
-//		{	
-//			Unit *wo;
-//			for (auto it = m_worldObject_toadd.begin();it != m_worldObject_toadd.end();++it)
-//			{
-//				wo = *it;
-//				//如果坐标非法,直接不加入地图
-//				if(!IsRightCoordNoCanRun(wo->GetPositionX(),wo->GetPositionY()))
-//				{
-//					tea_perror("生物非法坐标[%s] :%u,%.2f,%.2f",wo->GetName().c_str(),GetMapId(),wo->GetPositionX(),wo->GetPositionY());
-//					continue;
-//				}
-//
-//				wo->SetMap(this);
-//				wo->SetMapId(GetMapId());
-//				wo->SetInstanceId(GetInstanceID());
-//				if(wo->GetTypeId() == TYPEID_UNIT)
-//				{
-//					m_alive_creatures[wo->GetGuid()] = static_cast<Creature*>(wo);
-//				}		
-//				//生物别名,用于AI脚本查找对象
-//				if(!wo->GetAliasName().empty())
-//					AddAliasCreature(wo);	
-//				//加入grid
-//				m_grids->AddWorldObject(wo);
-//			}
-//			m_worldObject_toadd.clear();
-//		}	
-//
-//		//处理只刷一次的生物对象
-//		if(!m_to_del_creature.empty())
-//		{
-//			for (CreatureSet::iterator it = m_to_del_creature.begin();
-//				it != m_to_del_creature.end();++it)
-//			{
-//				/*m_grids->DelWorldObject(*it);		
-//				m_alive_creatures.erase((*it)->GetGuid());			
-//				if(!(*it)->m_alias_name.empty())
-//					DelAliasCreature(*it);*/
-//				LeaveCreature(*it);		
-//
-//				delete *it;
-//			}
-//			m_to_del_creature.clear();	
-//		}	
-//
-//		//处理需要删掉的游戏对象,动态对象全部由此管理,暂时只有战利品
-//		for (GameObjectRespawnList::iterator it = m_go_dynamic.begin();
-//			it != m_go_dynamic.end();)
-//		{
-//			it->first -= diff;
-//			GameObjectMap::iterator it_go = m_gameobjects.find(it->second);
-//			if(it_go == m_gameobjects.end())
-//			{
-//				it = m_go_dynamic.erase(it);
-//				continue;
-//			}
-//			GameObject *go = it_go->second;
-//
-//			//超时的
-//			if (it->first < 0	|| (!go->IsGEAR()))		
-//			{
-//				//			
-//				DeleteGameObject(go);			
-//				it = m_go_dynamic.erase(it);
-//			}
-//			else ++it;		
-//		}
-//	}
 //
 //	void Map::AddRespanPlayer(Player* player)
 //	{
@@ -486,7 +310,7 @@ public class SceneMap implements Tick {
 //		return true;
 //	}
 //
-//	bool Map::IsRightCoordNoCanRun(float x,float y)
+//	bool Map::isValidPosition(float x,float y)
 //	{
 //		////四舍五入先
 //		if(x < 0.00f || y < 0.00f) return false;
@@ -592,48 +416,59 @@ public class SceneMap implements Tick {
 //
 //		delete go;
 //	}
-//
-//	bool Map::AddCreature(Creature *creature)
-//	{
-//		if(!IsRightCoordNoCanRun(creature->GetPositionX(),creature->GetPositionY()))
-//			return false;
-//		m_worldObject_toadd.push_back(creature);
-//		return true;
-//	}
+	
+	public boolean addCreature(SceneCreature creature) {
+		// 判断当前坐标是否合法
+		if (!this.isValidPosition(creature.getPositionX(), creature.getPositionY())) {
+			return false;
+		}
+		this.toBeAddedElementList.add(creature);
+		return true;
+	}
+	
+	private SceneCreature newCreature(int entry, 
+										float x, 
+										float y, 
+										float orient, 
+										int moveType, 
+										int spawnType, 
+										int respawnTime) {
+		
+		return this.newCreature(entry, x, y, orient, moveType, spawnType, respawnTime, false);
+	}
 
-	private SceneCreature newCreature(int entry, float x, float y, float toward, int moveType, int spawnType, int respawnTime) {
+	private SceneCreature newCreature(int entry, 
+										float x, 
+										float y, 
+										float orient, 
+										int moveType, 
+										int respawnType, 
+										int respawnTime, 
+										boolean activeGrid) {
+		
 		SceneCreature creature = new SceneCreature();
 		
 		if (!creature.create(this.createUnitBinlogId(), entry)) {
 			return null;
 		}
 		
+		creature.setBornPos(x, y);
+		creature.setPosition(x, y);
+		creature.setOrient(orient);
+		creature.setMoveType(moveType);
+		creature.setRespawnType(respawnType);
+		creature.setRespawnTime(respawnTime);
+		// TODO:其他属性 尸体消失时间
 		
-//		if (temp->npcflag == 0 && temp->monster_type == 1) {
-//			new_creature->SetUnitFlags(UNIT_FIELD_FLAGS_IS_BOSS_CREATURE);
-//		}
-//		new_creature->SetBornPos(x,y);
-//		new_creature->SetPosition(x,y);
-//		new_creature->SetOrientation((float)toward);
-//		new_creature->SetBodyMissTime(temp->body_miss);
-//
-//		if(alias_name != NULL && strlen(alias_name) != 0)
-//			new_creature->SetAliasName(alias_name);
-//		new_creature->SetFaction(faction);
-//		new_creature->Initialize();
-//		//激活grid
-//		if(active_grid)
-//			new_creature->SetCanActiveGrid(true);
-//		//新对象清理掉更新包
-//		new_creature->Clear();
-//		//如果添加失败返回空
-//		if(!AddCreature(new_creature))
-//		{
-//			safe_delete(new_creature);
-//			return NULL;
-//		}
+		creature.initAction();
+		creature.setCanActiveGrid(activeGrid);
+		//如果添加失败返回空
+		if(!this.addCreature(creature)) {
+			return null;
+		}
 		return creature;
 	}
+	
 //
 //	Creature *Map::AddCreatureTravelers(string &data,float x,float y, uint32 movetype,const char *alias_name)
 //	{
@@ -1213,10 +1048,166 @@ public class SceneMap implements Tick {
 	public boolean isValidPosition(int x, int y) {
 		return this.mapTemplate.isValidPosition(x, y);
 	}
+	
+	public boolean isValidPosition(float x, float y) {
+		return this.isValidPosition((int)x, (int)y);
+	}
 
 	@Override
 	public boolean update(int diff) {
 		
+		this.gridManager.update(diff);
+		
+		this.updateSceneElement(diff);
+//		//跑定时器
+//		if(diff < 1000 && !m_script_callbacks.empty() && !m_state_script.empty())
+//		{
+//			for(ScriptCBList::iterator it = m_script_callbacks.begin(); it != m_script_callbacks.end();)
+//			{
+//				script_timer_callback *stc = *it;
+//
+//				if(stc->invalid == 1)//已被删除
+//				{
+//					m_script_callbacks.erase(it++);
+//					free(stc);
+//					continue;
+//				}
+//				if(stc->is_new == 1)//下一帧再执行
+//				{
+//					stc->is_new = 0;
+//				}
+//				else
+//				{
+//					stc->timer.Update(diff);
+//					if(stc->timer.Passed())
+//					{
+//						if(DOTimerTickCallBack(this, stc->s_callback, stc->param1) == 0)
+//							stc->invalid = 1;
+//						stc->timer.Reset2();
+//					}
+//				}
+//				++it;
+//			}
+//		}
+//
+//		//跑定时器
+//		if(!m_script_timestamp_callbacks.empty())
+//		{
+//			for(ScriptTimeStampList::iterator it = m_script_timestamp_callbacks.begin(); it != m_script_timestamp_callbacks.end();)
+//			{
+//				script_timestamp_timer_callback *stc = *it;
+//
+//				if(stc->invalid == 1)//已被删除
+//				{
+//					m_script_timestamp_callbacks.erase(it++);
+//					free(stc);
+//					continue;
+//				}
+//				if(stc->is_new == 1)//下一帧再执行
+//				{
+//					stc->is_new = 0;
+//				}
+//				else
+//				{	
+//					if(stc->timestamp > 0 && (uint32)time(NULL) >= stc->timestamp)
+//					{
+//						DOTimerTickCallBack(this, stc->s_callback, stc->param1);
+//						stc->invalid = 1;					
+//					}
+//					else if (stc->timestamp == 0)
+//					{
+//						stc->invalid = 1;
+//					}
+//				}
+//				++it;
+//			}
+//		}
+//
+//		//处理需要复活的游戏对象，在玩家那跳心跳 好处不必要的可以不进数组
+//		for (PlayerRespawnList::iterator it_p = m_player_respawn.begin();
+//			it_p != m_player_respawn.end();)
+//		{
+//			Player *player = FindPlayer(*it_p);
+//			if (player && !player->isAlive())
+//			{
+//				//TODO:这里可以根据策划要求写复活逻辑
+//				player->Respawn();
+//				player->DoIfNeedAddProtectBuff();
+//			}
+//			if (player && player->isAlive())
+//				it_p = m_player_respawn.erase(it_p);
+//			else
+//				++it_p;
+//		}
+//
+//		//TODO: 如果效率不行再说 => 处理需要gameobject
+//		for (GameObjectMap::iterator iter = m_gameobjects.begin();iter != m_gameobjects.end();++iter)
+//		{
+//			if (!iter->second) {
+//				return;
+//			}
+//			iter->second->UpdateLiveStatus(diff);
+//		}
 		return false;
+	}
+	
+	private void updateSceneElement(int diff) {
+		//将待插入grid的对象插入进去
+		if (!this.toBeAddedElementList.isEmpty()) {
+			for (SceneElement element : this.toBeAddedElementList) {
+				if (!this.isValidPosition(element.getPositionX(), element.getPositionY())) {
+					// 错误提示
+					continue;
+				}
+				element.setMap(this);
+				element.setInstanceId(this.instId);
+				
+				if (element.isCreature()) {
+					this.creatureMap.put(element.getGuid(), (SceneCreature) element);
+				}
+				this.gridManager.addWorldObject(element);
+			}
+			this.toBeAddedElementList.clear();
+		}
+//
+//		//处理只刷一次的生物对象
+//		if(!m_to_del_creature.empty())
+//		{
+//			for (CreatureSet::iterator it = m_to_del_creature.begin();
+//				it != m_to_del_creature.end();++it)
+//			{
+//				/*m_grids->DelWorldObject(*it);		
+//				m_alive_creatures.erase((*it)->GetGuid());			
+//				if(!(*it)->m_alias_name.empty())
+//					DelAliasCreature(*it);*/
+//				LeaveCreature(*it);		
+//
+//				delete *it;
+//			}
+//			m_to_del_creature.clear();	
+//		}	
+//
+//		//处理需要删掉的游戏对象,动态对象全部由此管理,暂时只有战利品
+//		for (GameObjectRespawnList::iterator it = m_go_dynamic.begin();
+//			it != m_go_dynamic.end();)
+//		{
+//			it->first -= diff;
+//			GameObjectMap::iterator it_go = m_gameobjects.find(it->second);
+//			if(it_go == m_gameobjects.end())
+//			{
+//				it = m_go_dynamic.erase(it);
+//				continue;
+//			}
+//			GameObject *go = it_go->second;
+//
+//			//超时的
+//			if (it->first < 0	|| (!go->IsGEAR()))		
+//			{
+//				//			
+//				DeleteGameObject(go);			
+//				it = m_go_dynamic.erase(it);
+//			}
+//			else ++it;		
+//		}
 	}
 }

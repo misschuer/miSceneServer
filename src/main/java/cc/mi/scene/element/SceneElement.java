@@ -436,4 +436,16 @@ public abstract class SceneElement extends BinlogData implements Tick {
 		this.movingMills = 0;
 		this.movingPath.clear();
 	}
+	
+	public boolean isCreature() {
+		return false;
+	}
+	
+	public boolean isPlayer() {
+		return false;
+	}
+	
+	public boolean isGameObject() {
+		return false;
+	}
 }

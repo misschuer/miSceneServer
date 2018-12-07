@@ -23,4 +23,8 @@ public class SceneGameObject extends SceneElement {
 	public boolean isTeleport() {
 		return false;
 	}
+	
+	public boolean isGameObject() {
+		return true;
+	}
 }
