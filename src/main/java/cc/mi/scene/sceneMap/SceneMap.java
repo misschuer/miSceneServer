@@ -7,6 +7,7 @@ import java.util.Map;
 
 import cc.mi.core.callback.AbstractCallback;
 import cc.mi.core.constance.ObjectType;
+import cc.mi.core.gameData.TableMap;
 import cc.mi.core.generate.msg.MapCreateMsg;
 import cc.mi.core.generate.msg.MapDeleteMsg;
 import cc.mi.core.impl.Tick;
@@ -98,8 +99,7 @@ public class SceneMap implements Tick {
 			this.mapInfo.setInstId(instId);
 			this.mapInfo.setLineNo(lineNo);
 			this.mapInfo.setCreateTime(TimestampUtils.now());
-			// TODO:需要读表
-//			this.mapInfo.setInstType(this.mapTemplate.getBaseInfo().getType());
+			this.mapInfo.setInstType(TableMap.INSTANCE.getInstanceType(mapId));
 			
 			allParentMapInfoHash.put(instId, this.mapInfo);
 		} else {
