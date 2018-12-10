@@ -448,4 +448,14 @@ public abstract class SceneElement extends BinlogData implements Tick {
 	public boolean isGameObject() {
 		return false;
 	}
+	
+	public boolean isAlive() {
+		// TODO:
+		return false;
+	}
+	
+	public boolean isCanMove() {
+		// TODO:
+		return false;
+	}
 }

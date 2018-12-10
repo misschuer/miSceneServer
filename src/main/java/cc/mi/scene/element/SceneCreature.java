@@ -13,6 +13,8 @@ public class SceneCreature extends SceneElement {
 	private int respawnTime;
 	// 主人guid
 	private String host = null;
+	// 攻击的目标
+	private SceneElement target = null;
 	
 	public SceneCreature() {
 		super(SceneElement.ELEMENT_TYPE_CREATURE);
@@ -108,5 +110,13 @@ public class SceneCreature extends SceneElement {
 
 	public void setHost(String host) {
 		this.host = host;
+	}
+
+	public SceneElement getTarget() {
+		return target;
+	}
+
+	public void setTarget(SceneElement target) {
+		this.target = target;
 	}
 }
