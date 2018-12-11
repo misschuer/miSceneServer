@@ -3,7 +3,6 @@ package cc.mi.scene.element;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
 
 import cc.mi.core.binlog.data.BinlogData;
 import cc.mi.core.binlog.stru.BinlogStruValueInt;
@@ -15,8 +14,9 @@ import cc.mi.core.impl.Tick;
 import cc.mi.core.log.CustomLogger;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.utils.Mask;
+import cc.mi.core.utils.Path;
+import cc.mi.core.utils.Point2D;
 import cc.mi.scene.grid.Grid;
-import cc.mi.scene.info.FloatPoint;
 import cc.mi.scene.sceneMap.SceneMap;
 
 public abstract class SceneElement extends BinlogData implements Tick {
@@ -38,7 +38,7 @@ public abstract class SceneElement extends BinlogData implements Tick {
 	protected SceneMap map;				//当前所在地图
 
 	protected int movingMills;			//移动完当前点需要消耗,等于0时处于静止状态
-	protected Queue<FloatPoint> movingPath;	//移动路径
+	protected Path movingPath;	//移动路径
 	protected int movingLastDiff;		//累计时间差,用于减小精度误差
 	
 	private int intGuid = 0;
@@ -307,14 +307,6 @@ public abstract class SceneElement extends BinlogData implements Tick {
 		this.movingMills = movingMills;
 	}
 
-	public Queue<FloatPoint> getMovingPath() {
-		return movingPath;
-	}
-
-	public void setMovingPath(Queue<FloatPoint> movingPath) {
-		this.movingPath = movingPath;
-	}
-
 	public int getMovingLastDiff() {
 		return movingLastDiff;
 	}
@@ -359,7 +351,7 @@ public abstract class SceneElement extends BinlogData implements Tick {
 
 		//如果已经超过点了
 		if (this.movingMills <= this.movingLastDiff) {
-			FloatPoint fp = this.movingPath.poll();
+			Point2D<Float> fp = this.movingPath.pop();
 			//设置为新坐标并弹出点
 			this.setPosition(fp.getX(), fp.getY());
 			//到达最后的点
@@ -372,7 +364,7 @@ public abstract class SceneElement extends BinlogData implements Tick {
 				//计算一下上一点消耗了多少时间
 				this.movingLastDiff -= this.movingMills;
 				//计算下一个点需要消耗的时间
-				fp = this.movingPath.peek();
+				fp = this.movingPath.front();
 				float angle = this.getAngle(fp.getX(), fp.getY());
 				float dist = this.getDistance(fp.getX(), fp.getY());
 				this.setOrient(angle);
@@ -434,7 +426,7 @@ public abstract class SceneElement extends BinlogData implements Tick {
 //			GetMap()->Broadcast(pkt.GetPkt(), this);		
 		}
 		this.movingMills = 0;
-		this.movingPath.clear();
+		this.movingPath = null;
 	}
 	
 	public boolean isCreature() {
@@ -457,5 +449,55 @@ public abstract class SceneElement extends BinlogData implements Tick {
 	public boolean isCanMove() {
 		// TODO:
 		return false;
+	}
+	
+	// 多少格每秒
+	public float getMoveSpeed() {
+		// 根据读表来的
+		return 100;
+	}
+	
+	public double getDistance(SceneElement target) {
+		return Math.sqrt(Math.pow(this.positionX - target.positionX, 2) + Math.pow(this.positionY - target.positionY, 2));
+	}
+	
+	public float getAngle(SceneElement target) {
+		return this.getAngle(target.positionX, target.positionY);
+	}
+	
+	public void moveTo(float x, float y) {
+		Path path = new Path();
+		path.addPath(new Point2D<Float>(x, y));
+		this.moveTo(path, true);
+	}
+	
+	/**
+	 * 
+	 * @param path
+	 * @param stopForceSync	如果起点和终点一致, 是否需要强制发送停止移动包 (一般没什么用处, 就让它从a到a好了)
+	 */
+	public void moveTo(Path path, boolean stopForceSync) {
+		if (path.isEmpty()) {
+			return;
+		}
+		
+		if (this.movingPath == null || this.movingPath != path) {
+			this.movingPath = path;
+		}
+
+		Point2D<Float> toPoint = this.movingPath.front();
+		float angle = this.getAngle(toPoint.getX(), toPoint.getY());
+		float range = this.getDistance(toPoint.getX(), toPoint.getY());
+		
+		this.movingMills = (int)(range * 10 * 1000 / this.getMoveSpeed());
+		
+		this.movingLastDiff = 0;
+		// TODO:发送移动包
+//		GetGrid()->unit_move_blocks.push_back(buff);
+		if (!this.isMoving()) {
+			this.movingPath = null;
+		} else {
+			this.setOrient(angle);
+		}
 	}
 }

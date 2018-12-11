@@ -13,6 +13,9 @@ public class SceneCreature extends SceneElement {
 	private int respawnTime;
 	// 主人guid
 	private String host = null;
+	// 攻击距离
+	private int attackRange = 0;
+	
 	// 攻击的目标
 	private SceneElement target = null;
 	
@@ -118,5 +121,13 @@ public class SceneCreature extends SceneElement {
 
 	public void setTarget(SceneElement target) {
 		this.target = target;
+	}
+
+	public int getAttackRange() {
+		return attackRange;
+	}
+
+	public void setAttackRange(int attackRange) {
+		this.attackRange = attackRange;
 	}
 }
