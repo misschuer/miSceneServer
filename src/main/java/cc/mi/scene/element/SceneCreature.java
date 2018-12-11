@@ -24,8 +24,30 @@ public class SceneCreature extends SceneElement {
 	}
 	
 	public boolean update(int diff) {
-		return super.update(diff);
+		boolean ret = super.update(diff);
+		if (!ret) return ret;
+		this.updateMotion(diff);
+		return true;
 	}
+	
+	public void updateMotion(int diff) {
+		
+//		//是否需要释放
+//		if(!m_expire_impl.empty())
+//		{
+//			for_each(m_expire_impl.begin(),m_expire_impl.end(),safe_delete);
+//			m_expire_impl.clear();
+//		}	
+//			
+//		if(!m_impl.top()->Update(*this,diff) && m_impl.size() > 1)
+//		{
+//			MovementGenerator *curr = m_impl.top();
+//			m_impl.pop();
+//			curr->Finalize(*this);
+//			m_expire_impl.push_back(curr);
+//		}
+	}
+	
 	
 	private void initBase(int entry) {
 		// 读模板表

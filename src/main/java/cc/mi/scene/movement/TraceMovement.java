@@ -1,5 +1,6 @@
 package cc.mi.scene.movement;
 
+import cc.mi.core.constance.MovementType;
 import cc.mi.core.manager.MapTemplateManager;
 import cc.mi.core.utils.Point2D;
 import cc.mi.core.xlsxData.MapTemplate;
@@ -7,12 +8,12 @@ import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
 
 /**
- * 跟随模式
+ * 追踪模式
  * @author gy
  *
  */
-public class FollowMovement extends MovementBase {
-
+public class TraceMovement extends MovementBase {
+	private Point2D<Float> newTarget;
 	/**
 	 * 要不要围成一圈什么的 再说
 	 * @param creature
@@ -45,7 +46,7 @@ public class FollowMovement extends MovementBase {
 			return;
 		}
 		
-		Point2D<Float> newTarget = this.getTargetRelatedPos(creature, target);
+		newTarget = this.getTargetRelatedPos(creature, target);
 		// 没有障碍物直接移动
 		int mapId = creature.getMapId();
 		MapTemplate mt = MapTemplateManager.INSTANCE.getTemplate(mapId);
@@ -59,19 +60,44 @@ public class FollowMovement extends MovementBase {
 	
 	@Override
 	public void finalize(SceneCreature creature) {
-		
+		creature.stopMoving(true);
 	}
 
 	@Override
 	public boolean update(SceneCreature creature, int diff) {
-		// TODO Auto-generated method stub
-		return false;
+		if (!creature.isCanMove()) {
+			creature.setTarget(null);
+			return true;
+		}
+		
+		if (!creature.getTarget().isAlive()) {
+			creature.setTarget(null);
+			return true;
+		}
+		
+		float tx = creature.getTarget().getPositionX();
+		float ty = creature.getTarget().getPositionY();
+		
+		//如果生物是移动状态，并且目标的方向相同则不用处理，目标移动类型设置了目标
+		if (newTarget.getX() != tx || newTarget.getY() != ty 
+				|| !creature.isMoving()) {
+//			if (newTarget.getX() != tx || newTarget.getY() != ty) {
+//				
+//			}
+			int mapId = creature.getMapId();
+			MapTemplate mt = MapTemplateManager.INSTANCE.getTemplate(mapId);
+			if (creature.isMoving() && !mt.isValidPosition((int)creature.getPositionX(), (int)creature.getPositionY())) {
+				return true;
+			}
+			creature.stopMoving(true);
+			this.init(creature, 0);
+		}
+		
+		return true;
 	}
 
 	@Override
 	public int getMovementType() {
-		// TODO Auto-generated method stub
-		return 0;
+		return MovementType.TRACE;
 	}
-
 }

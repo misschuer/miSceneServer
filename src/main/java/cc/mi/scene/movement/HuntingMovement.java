@@ -7,7 +7,7 @@ import cc.mi.scene.element.SceneCreature;
  * @author gy
  *
  */
-public class HuntingMovement extends FollowMovement {
+public class HuntingMovement extends TraceMovement {
 	@Override
 	public void init(SceneCreature creature, int params1) {
 		// TODO Auto-generated method stub
