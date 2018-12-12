@@ -1,5 +1,10 @@
 package cc.mi.scene.element;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
+import cc.mi.scene.movement.MovementBase;
+
 public class SceneCreature extends SceneElement {
 	
 	private float bornX;
@@ -19,6 +24,9 @@ public class SceneCreature extends SceneElement {
 	// 攻击的目标
 	private SceneElement target = null;
 	
+	// 活动列表
+	protected Queue<MovementBase> movementList = new LinkedList<>();
+	
 	public SceneCreature() {
 		super(SceneElement.ELEMENT_TYPE_CREATURE);
 	}
@@ -26,26 +34,34 @@ public class SceneCreature extends SceneElement {
 	public boolean update(int diff) {
 		boolean ret = super.update(diff);
 		if (!ret) return ret;
-		this.updateMotion(diff);
+
+//		if(m_threat_move_type != IDLE_MOTION_TYPE)
+//		{
+//			m_timer_threat.Update(diff);
+//			if(m_timer_threat.Passed())
+//			{
+//				m_threatMgr.Update(UPDATE_THREAT_TIMER);
+//				m_timer_threat.Reset(UPDATE_THREAT_TIMER);
+//			}	
+//		}	
+//
+//		m_motion_timer_diff += diff;
+//		m_motion_timer.Update(diff);//生物智能移动定时器
+//		if(m_motion_timer.Passed())
+//		{
+//			m_motion_timer.Reset();	
+//			UpdateMotion(m_motion_timer_diff);
+//			m_motion_timer_diff = 0;
+//		}
+
 		return true;
 	}
 	
 	public void updateMotion(int diff) {
-		
-//		//是否需要释放
-//		if(!m_expire_impl.empty())
-//		{
-//			for_each(m_expire_impl.begin(),m_expire_impl.end(),safe_delete);
-//			m_expire_impl.clear();
-//		}	
-//			
-//		if(!m_impl.top()->Update(*this,diff) && m_impl.size() > 1)
-//		{
-//			MovementGenerator *curr = m_impl.top();
-//			m_impl.pop();
-//			curr->Finalize(*this);
-//			m_expire_impl.push_back(curr);
-//		}
+		if (!movementList.peek().update(this, diff) && movementList.size() > 1) {
+			MovementBase curr = movementList.poll();
+			curr.finalize(this);
+		}
 	}
 	
 	
@@ -68,6 +84,8 @@ public class SceneCreature extends SceneElement {
 	 * 初始化其他的 如运动方式, 仇恨管理
 	 */
 	public void initAction() {
+		// 通过movetype 获取 movementbase
+		
 //		//初始化移动控制	
 //		MovementGenerator *curr = Tea::SelectMovementGenerator(this);
 //		curr->Initialize(*this);
@@ -86,6 +104,32 @@ public class SceneCreature extends SceneElement {
 //		m_threatMgr.Initialize(this, 0, 0);	
 //		creatureInit(this);
 	}
+	
+//	//走向目标
+//	void Creature::MotionMoveTarget()
+//	{
+//		MovementGenerator *curr = NULL;
+//
+//		//如果栈顶已经是朝目标走,或者是idle(用于占位)
+//		if((m_impl.top()->GetMovementGeneratorType() == m_threat_move_type) 
+//			|| (m_impl.top()->GetMovementGeneratorType() == IDLE_MOTION_TYPE 
+//				&& static_cast<IdleMovementGenerator*>(m_impl.top())->m_timer.GetInterval()>0))
+//			return;
+//
+//		//如果生物的行动栈中是初始化的，那么先插入一个回家的
+//		if(m_impl.size() == 1)
+//		{
+//			curr = Tea::SelectMovementGenerator(this,HOME_MOTION_TYPE);
+//			curr->Initialize(*this);
+//			m_impl.push(curr);
+//		}
+//
+//		//向目标寻路追杀
+//		curr = Tea::SelectMovementGenerator(this,MovementGeneratorType(m_threat_move_type));
+//		//curr = Tea::SelectMovementGenerator(this,TARGET_MOTION_TYPE);
+//		curr->Initialize(*this);	
+//		m_impl.push(curr);
+//	}
 
 	public float getBornX() {
 		return bornX;

@@ -2,6 +2,7 @@ package cc.mi.scene.movement;
 
 import cc.mi.core.constance.MovementType;
 import cc.mi.core.manager.MapTemplateManager;
+import cc.mi.core.utils.Path;
 import cc.mi.core.utils.Point2D;
 import cc.mi.core.xlsxData.MapTemplate;
 import cc.mi.scene.element.SceneCreature;
@@ -35,6 +36,19 @@ public class TraceMovement extends MovementBase {
 		return new Point2D<Float>(nx, ny);
 	}
 	
+	protected boolean mainLoadFindPath(SceneCreature creature) {
+		SceneElement target = creature.getTarget();
+		if (target != null && creature.getDistance(target) > 50) {
+			return false;
+		}
+		
+		int mapId = creature.getMapId();
+		MapTemplate mt = MapTemplateManager.INSTANCE.getTemplate(mapId);
+		Path path = mt.getPath(creature.getPositionX(), creature.getPositionY(), target.getPositionX(), target.getPositionY());
+		creature.moveTo(path, false);
+		return true;
+	}
+	
 	@Override
 	public void init(SceneCreature creature, int params1) {
 		if (!creature.isAlive() || !creature.isCanMove()) {
@@ -52,9 +66,15 @@ public class TraceMovement extends MovementBase {
 		MapTemplate mt = MapTemplateManager.INSTANCE.getTemplate(mapId);
 		// 起始点和目标点无障碍物
 		if (mt.isCanRun(creature.getPositionX(), creature.getPositionY(), newTarget.getX(), newTarget.getY(), true)) {
-			
+			creature.moveTo(newTarget.getX(), newTarget.getY());
 		} else {
 			// 主干道寻路
+			if (this.mainLoadFindPath(creature)) {
+				return;
+			}
+			
+			// TODO: 这个都寻不到 说明不是同一个地点就不寻路了吧
+			creature.setTarget(null);
 		}
 	}
 	
@@ -65,6 +85,11 @@ public class TraceMovement extends MovementBase {
 
 	@Override
 	public boolean update(SceneCreature creature, int diff) {
+		// 目标不存在了
+		if (creature.getTarget() == null) {
+			return true;
+		}
+		
 		if (!creature.isCanMove()) {
 			creature.setTarget(null);
 			return true;

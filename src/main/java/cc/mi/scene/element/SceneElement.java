@@ -476,7 +476,7 @@ public abstract class SceneElement extends BinlogData implements Tick {
 	 * @param path
 	 * @param stopForceSync	如果起点和终点一致, 是否需要强制发送停止移动包 (一般没什么用处, 就让它从a到a好了)
 	 */
-	public void moveTo(Path path, boolean stopForceSync) {
+	public void moveTo(Path path, boolean stopMoveForceSync) {
 		if (path.isEmpty()) {
 			return;
 		}

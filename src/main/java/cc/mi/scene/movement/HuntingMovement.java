@@ -1,5 +1,6 @@
 package cc.mi.scene.movement;
 
+import cc.mi.core.constance.MovementType;
 import cc.mi.scene.element.SceneCreature;
 
 /**
@@ -10,24 +11,32 @@ import cc.mi.scene.element.SceneCreature;
 public class HuntingMovement extends TraceMovement {
 	@Override
 	public void init(SceneCreature creature, int params1) {
-		// TODO Auto-generated method stub
-
+		super.init(creature, params1);
 	}
 	
 	@Override
 	public void finalize(SceneCreature creature) {
-		
+		super.finalize(creature);
 	}
 
 	@Override
 	public boolean update(SceneCreature creature, int diff) {
-		// TODO Auto-generated method stub
+		if (creature.getTarget() == null) {
+			return false;
+		}
+		if (this.attackTarget(creature, diff)) {
+			return true;
+		}
+		return super.update(creature, diff);
+	}
+	
+	private boolean attackTarget(SceneCreature creature, int diff) {
+		// 攻击逻辑
 		return false;
 	}
 
 	@Override
 	public int getMovementType() {
-		// TODO Auto-generated method stub
-		return 0;
+		return MovementType.HUNTING;
 	}
 }
