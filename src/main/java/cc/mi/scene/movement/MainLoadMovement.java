@@ -98,4 +98,9 @@ public class MainLoadMovement extends MovementBase {
 	public int getMovementType() {
 		return MovementType.MAIN_LOAD;
 	}
+
+	@Override
+	public MovementBase newInstance() {
+		return new MainLoadMovement();
+	}
 }

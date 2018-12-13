@@ -10,7 +10,6 @@ import cc.mi.scene.element.SceneCreature;
  *
  */
 public class IdleMovement extends MovementBase {
-	
 	protected TimerInterval timer;
 	
 	@Override
@@ -35,5 +34,10 @@ public class IdleMovement extends MovementBase {
 	@Override
 	public int getMovementType() {
 		return MovementType.IDLE;
+	}
+
+	@Override
+	public MovementBase newInstance() {
+		return new IdleMovement();
 	}
 }

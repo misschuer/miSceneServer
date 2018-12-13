@@ -125,4 +125,9 @@ public class TraceMovement extends MovementBase {
 	public int getMovementType() {
 		return MovementType.TRACE;
 	}
+
+	@Override
+	public MovementBase newInstance() {
+		return new TraceMovement();
+	}
 }

@@ -500,4 +500,39 @@ public abstract class SceneElement extends BinlogData implements Tick {
 			this.setOrient(angle);
 		}
 	}
+	
+	public boolean isCanAttack(SceneElement target) {
+		// TODO: 所有人可攻击
+		return true;
+	}
+	
+	public void onInSight(SceneElement target) {
+		
+	}
+	
+	public void onOffSight(SceneElement target) {
+		
+	}
+	
+	// 删除攻击目标
+	public void delAttackTarget(int id) {
+//		this->removePositionInfo(unit);
+//
+//		if(m_attacker_player.find(unit) != m_attacker_player.end())
+//		{
+//			m_attacker_player.erase(unit);
+//			return;
+//		}
+//		if(m_attacker_unit.find(unit) != m_attacker_unit.end())
+//		{
+//			if (isDelOwnerShip)
+//			{
+//				Creature *attacker = dynamic_cast<Creature*>(m_map->FindUnit(unit));
+//				if (attacker && GetTypeId() == TYPEID_PLAYER)
+//					attacker->DelOwnerShip(GetUIntGuid());
+//			}		
+//			m_attacker_unit.erase(unit);
+//			return;
+//		}
+	}
 }

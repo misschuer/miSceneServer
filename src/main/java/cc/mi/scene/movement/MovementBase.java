@@ -9,4 +9,6 @@ public abstract class MovementBase {
 	public abstract boolean update(SceneCreature creature, int diff);
 	public abstract int getMovementType();
 	
+	public abstract MovementBase newInstance();
+	
 }

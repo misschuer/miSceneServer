@@ -39,4 +39,9 @@ public class HuntingMovement extends TraceMovement {
 	public int getMovementType() {
 		return MovementType.HUNTING;
 	}
+	
+	@Override
+	public MovementBase newInstance() {
+		return new HuntingMovement();
+	}
 }

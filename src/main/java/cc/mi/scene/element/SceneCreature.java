@@ -3,7 +3,9 @@ package cc.mi.scene.element;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import cc.mi.scene.manager.ThreatManager;
 import cc.mi.scene.movement.MovementBase;
+import cc.mi.scene.movement.MovementFactory;
 
 public class SceneCreature extends SceneElement {
 	
@@ -23,6 +25,9 @@ public class SceneCreature extends SceneElement {
 	
 	// 攻击的目标
 	private SceneElement target = null;
+	
+	// 仇恨管理
+	private ThreatManager threat = new ThreatManager();
 	
 	// 活动列表
 	protected Queue<MovementBase> movementList = new LinkedList<>();
@@ -65,18 +70,20 @@ public class SceneCreature extends SceneElement {
 	}
 	
 	
-	private void initBase(int entry) {
+	private boolean initBase(int entry) {
+		// TODO:先判断entry是否存在表中
 		// 读模板表
+		// 设置属性
+		// name 等
+		return true;
 	}
 	
 	public boolean create(String binlogId, int entry) {
-		// TODO:先判断entry是否存在表中
-		// 初始化
 		super.onInit(binlogId, entry);
+		if (!this.initBase(entry)) {
+			return false;
+		}
 		
-		this.initBase(entry);
-		// 设置属性
-		// name 等
 		return true;
 	}
 	
@@ -84,13 +91,10 @@ public class SceneCreature extends SceneElement {
 	 * 初始化其他的 如运动方式, 仇恨管理
 	 */
 	public void initAction() {
-		// 通过movetype 获取 movementbase
-		
-//		//初始化移动控制	
-//		MovementGenerator *curr = Tea::SelectMovementGenerator(this);
-//		curr->Initialize(*this);
-//		m_impl.push(curr);
-//
+		MovementBase curr = MovementFactory.getMovement(this.getMoveType());
+		curr.init(this, 0);
+		this.movementList.add(curr);
+
 //		//调用脚本初始化,如果失败则重新将脚本置空
 //		if (!m_script_name.empty() && DoScriptInit(m_script_name.c_str(),this))		
 //			m_script_name = "";
@@ -101,8 +105,10 @@ public class SceneCreature extends SceneElement {
 //		//初始化仇恨管理
 //		//creature_template& data = GetTemplate();	
 //		
-//		m_threatMgr.Initialize(this, 0, 0);	
-//		creatureInit(this);
+//		m_threatMgr.Initialize(this, 0, 0);
+		int visionRadius = 0;
+		int actionRadius = 0;
+		threat.init(visionRadius, actionRadius);
 	}
 	
 //	//走向目标
