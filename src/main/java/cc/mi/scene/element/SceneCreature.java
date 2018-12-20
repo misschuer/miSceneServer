@@ -3,6 +3,7 @@ package cc.mi.scene.element;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import cc.mi.core.gameData.TableCreature;
 import cc.mi.scene.manager.ThreatManager;
 import cc.mi.scene.movement.MovementBase;
 import cc.mi.scene.movement.MovementFactory;
@@ -63,6 +64,7 @@ public class SceneCreature extends SceneElement {
 	}
 	
 	public void updateMotion(int diff) {
+		// 至少有一个元素
 		if (!movementList.peek().update(this, diff) && movementList.size() > 1) {
 			MovementBase curr = movementList.poll();
 			curr.finalize(this);
@@ -71,10 +73,15 @@ public class SceneCreature extends SceneElement {
 	
 	
 	private boolean initBase(int entry) {
-		// TODO:先判断entry是否存在表中
-		// 读模板表
+		// 先判断entry是否存在表中
+		if (!TableCreature.INSTANCE.isDataExist(entry)) {
+			return false;
+		}
+		
 		// 设置属性
+		
 		// name 等
+		this.setName(TableCreature.INSTANCE.getName(entry));
 		return true;
 	}
 	
@@ -95,19 +102,9 @@ public class SceneCreature extends SceneElement {
 		curr.init(this, 0);
 		this.movementList.add(curr);
 
-//		//调用脚本初始化,如果失败则重新将脚本置空
-//		if (!m_script_name.empty() && DoScriptInit(m_script_name.c_str(),this))		
-//			m_script_name = "";
-//			
-//		//tea_pdebug("%u:[%s] init ai[%s],move_type[%u],reactState[%d]",GetEntry(), GetName(), m_script_name.c_str(), m_move_type, (int)m_reactState);
-//		m_timer_say.Reset(urand(2000,240000));	
-//
-//		//初始化仇恨管理
-//		//creature_template& data = GetTemplate();	
-//		
-//		m_threatMgr.Initialize(this, 0, 0);
-		int visionRadius = 0;
-		int actionRadius = 0;
+		//初始化仇恨管理
+		int visionRadius = TableCreature.INSTANCE.getVisionRadius(this.getEntry());
+		int actionRadius = TableCreature.INSTANCE.getActionRadius(this.getEntry());
 		threat.init(visionRadius, actionRadius);
 	}
 	
