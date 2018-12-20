@@ -1,6 +1,10 @@
 package cc.mi.scene;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import cc.mi.core.log.CustomLogger;
+import cc.mi.core.manager.GameDataManager;
 import cc.mi.core.net.ClientCore;
 import cc.mi.scene.config.ServerConfig;
 import cc.mi.scene.net.SceneHandler;
@@ -11,35 +15,60 @@ public class Startup {
 	private static void start() throws NumberFormatException, Exception {
 		ServerConfig.loadConfig();
 		
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					while (true) {
-						ClientCore.INSTANCE.start(ServerConfig.getGateIp(), ServerConfig.getGatePort(), new SceneToGateHandler());
-						logger.devLog("连接网关服错误,系统将在1秒钟后重新连接");
-						Thread.sleep(1000);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}, "bootstrap-to-gate").start();
+		GameDataManager.INSTANCE.loads();
 		
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
+		connectGate();
+		connectCenter();
+	}
+	
+	private static void connectGate() {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		executor.execute(
+			new Runnable() {
+				@Override
+				public void run() {
 					while (true) {
-						ClientCore.INSTANCE.start(ServerConfig.getCenterIp(), ServerConfig.getCenterPort(), new SceneHandler());
-						logger.devLog("连接中心服错误,系统将在1秒钟后重新连接");
-						Thread.sleep(1000);
+						try {
+							ClientCore.INSTANCE.start(ServerConfig.getGateIp(), ServerConfig.getGatePort(), new SceneToGateHandler());
+						} catch (Exception e) {
+							logger.errorLog(e.getMessage());
+						} finally {
+							logger.errorLog("连接网关服错误,系统将在1秒钟后重新连接");
+							try {
+								Thread.sleep(1000);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			}
-		}, "bootstrap-to-center").start();
+		);
+	}
+	
+	private static void connectCenter() {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		executor.execute(
+			new Runnable() {
+				@Override
+				public void run() {
+					while (true) {
+						try {
+							ClientCore.INSTANCE.start(ServerConfig.getCenterIp(), ServerConfig.getCenterPort(), new SceneHandler());
+						} catch (Exception e) {
+							logger.errorLog(e.getMessage());
+						} finally {
+							logger.errorLog("连接中心服错误,系统将在1秒钟后重新连接");
+							try {
+								Thread.sleep(1000);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			}
+		);
 	}
 
 	public static void main(String[] args) throws NumberFormatException, Exception {

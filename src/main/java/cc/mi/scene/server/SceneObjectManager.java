@@ -18,4 +18,8 @@ public class SceneObjectManager extends ServerObjectManager {
 		}
 		return new BinlogData(1 << 6, 1 << 6);
 	}
+	
+	public boolean update(int diff) {
+		return false;
+	}
 }
