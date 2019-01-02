@@ -1,11 +1,17 @@
 package cc.mi.scene.manager;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import cc.mi.core.constance.ReactType;
 import cc.mi.scene.element.SceneCreature;
 import cc.mi.scene.element.SceneElement;
+import cc.mi.scene.element.ScenePlayer;
+import cc.mi.scene.grid.Grid;
 
 /**
  * 如果可能的话作为scenecreature的内部静态类 这样不会有循环引用问题
@@ -25,25 +31,25 @@ public class ThreatManager {
 	/*
 	 * 获得target的intid
 	 */
-	public int getTarget() {
-		int targetId = -1;
+	public SceneElement getTarget() {
+		SceneElement target = null;
 		int hatred = 0;
 		
 		for (Entry<Integer, ThreatValue> info : targetHash.entrySet()) {
 			if (hatred < info.getValue().getHatred()) {
 				hatred = info.getValue().getHatred();
-				targetId = info.getKey();
+				target = info.getValue().getTarget();
 			}
 		}
 		
-		return targetId;
+		return target;
 	}
 	
 	public void addValue(SceneElement self, SceneElement target, int v) {
 		// 如果不会加仇恨的return
 		if (!targetHash.containsKey(target.getUintId())) {
 			if (self.isCanAttack(target)) {
-				ThreatValue value = new ThreatValue();
+				ThreatValue value = new ThreatValue(target);
 				value.setAttackHatred(v);
 				targetHash.put(target.getUintId(), value);
 			}
@@ -93,126 +99,122 @@ public class ThreatManager {
 //		//if(me->GetEvadeState()) return;
 //		
 //		//如果是防御怪
-//		if(me->GetReactState() == REACT_DEFENSIVE)
-//			return;
-//
-//		float x,y;
-//		me->GetBornPos(x,y);
-//
-//		//超出活动范围直接返回
-//		if((uint32)me->GetDistance(x,y) > actionradius) 
-//		{
-//			Clear();
-//			//清除归属者
+		if (self.getReactType() == ReactType.REACT_DEFENSIVE) {
+			return false;
+		}
+		
+		//超出活动范围直接返回
+		if (!self.isInActionSight(this.actionRadius)) {
+			this.clear();
+			//清除归属者
 //			me->ResetOwnerShip();
-//			//有待商榷
-//			//me->ClearAttacker();
-//			return;
-//		}
-//		//更新旧的仇恨列表
-//		UpdateThreatMap();
-//
-//		//如果可能主动攻击其他生物的生物
-//		if(me->GetReactState() == REACT_AGGRESSIVE || me->GetReactState() == REACT_AGGRESSIVE_UNIT )
-//		{
-//			Grid *grid = me->GetGrid();
-//			//从周围九大格获得所有玩家
-//			Grid::CreatureList::iterator iter;
-//			Grid::GridPtrVec::iterator viter;
-//			for(viter = grid->notice_grid.begin(); viter != grid->notice_grid.end(); ++viter)
-//				for(iter = (*viter)->creatures.begin(); iter != (*viter)->creatures.end(); ++iter)
-//					CaluThreatByDistance(*iter);
-//		}
-//
-//		if(me->GetReactState() == REACT_AGGRESSIVE || me->GetReactState() == REACT_AGGRESSIVE_PLAYER )
-//		{
-//			//如果可能主动攻击玩家的生物
-//			Grid *grid = me->GetGrid();
-//			//从周围九大格获得所有玩家
-//			PlayerSet::iterator iter;
-//			Grid::GridPtrVec::iterator viter;
-//			for(viter = grid->notice_grid.begin(); viter != grid->notice_grid.end(); ++viter)
-//				for(iter = (*viter)->players.begin(); iter != (*viter)->players.end(); ++iter)
-//					CaluThreatByDistance(*iter);
-//		}
-//
-//		//走向最大仇恨目标
-//		Unit *threatTarget = GetTarget();
-//		if (threatTarget != me->GetTarget())
-//		{
-//			me->SetTarget(threatTarget);
-//			if (threatTarget)
-//				me->MotionMoveTarget();//移动到目标
-//		}
-//
-//		// 如果找不到目标 则清空攻击列表
-//		if (threatTarget == NULL) {
+			//有待商榷
+			//me->ClearAttacker();
+			return false;
+		}
+		
+		//更新旧的仇恨列表
+		this.updateThreadMap(self);
+
+		//如果可能主动攻击其他生物的生物
+		if (self.getReactType() == ReactType.REACT_AGGRESSIVE || self.getReactType() == ReactType.REACT_AGGRESSIVE_UNIT) {
+			Grid grid = self.getGrid();
+			//从周围九大格获得所有玩家
+			Iterator<Grid> gridIter = grid.noticeGridIterator();
+			for (;gridIter.hasNext();) {
+				Grid neib = gridIter.next();
+				Iterator<SceneCreature> creatureIter = neib.creatureIterator();
+				for (;creatureIter.hasNext();) {
+					SceneCreature creature = creatureIter.next();
+					this.calcDistanceHatred(self, creature);
+				}
+			}
+		}
+		
+		//如果可能主动攻击玩家的生物
+		if (self.getReactType() == ReactType.REACT_AGGRESSIVE || self.getReactType() == ReactType.REACT_AGGRESSIVE_PLAYER) {
+			Grid grid = self.getGrid();
+			//从周围九大格获得所有玩家
+			Iterator<Grid> gridIter = grid.noticeGridIterator();
+			for (;gridIter.hasNext();) {
+				Grid neib = gridIter.next();
+				Iterator<ScenePlayer> playerIter = neib.playerIterator();
+				for (;playerIter.hasNext();) {
+					ScenePlayer player = playerIter.next();
+					this.calcDistanceHatred(self, player);
+				}
+			}
+		}
+
+		//走向最大仇恨目标
+		SceneElement target = this.getTarget();
+		if (target != self.getTarget()) {
+			self.setTarget(target);
+			if (target != null) {
+				self.moveToTarget(); //移动到目标
+			}
+		}
+
+		// 如果找不到目标 则清空攻击列表
+		if (target == null) {
 //			if (me->GetHealth() < me->GetMaxHealth()) {
 //				// 清空攻击关系列表
 //				me->GetMap()->ClearCreatureHitHash(me->GetUIntGuid());
 //			}
-//		}
-		return false;
+		}
+		return true;
 	}
 	
-	protected void calcDistanceHatred(SceneCreature self) {
-//		//如果玩家已经存在仇恨则不需要再次增加距离仇恨	
-//		if(m_targetMap.count(_target->GetUIntGuid())>0)
-//			return;
-//		float x,y;
-//		me->GetBornPos(x,y);
-//
-//		//玩家在视野范围内，并且在怪物活动范围内
-//		float distance = 0.0f;
-//		if( _target->isAlive() && 
-//			!me->IsFriendlyTo(_target) &&
-//			_target->GetDistance(x, y) < actionradius && 
-//			(distance = me->GetDistance(_target)) < visionradius&&
-//			_target->isCanSee())
-//		{
-//			//初次出现在视野
-//			if(me->AI_MoveInLineOfSight(_target) != 0)
-//			{
-//				m_targetMap.insert(TargetMap::value_type(_target->GetUIntGuid(), ThreatValue(0,  getThreat(distance))));
-//			}
-//		}
+	protected void calcDistanceHatred(SceneCreature self, SceneElement target) {
+		//如果玩家已经存在仇恨则不需要再次增加距离仇恨
+		if (this.targetHash.containsKey(target.getUintId())) {
+			return;
+		}
+		
+		if (target.isAlive() && self.isCanAttack(target) && self.isInActionSight(actionRadius) && self.isInSight(target, visionRadius)) {
+			//初次出现在视野
+			if (self.moveInSight(target)) {
+				int dist = (int) self.getDistance(target);
+				ThreatValue tv = new ThreatValue(target);
+				tv.setDistantHatred(dist);
+				this.targetHash.put(target.getUintId(), tv);
+			}
+		}
 	}
 	
-	protected void updateThreadMap() {
-//		Unit *threater = 0;
-//		Unit *tagert = me->GetTarget();
-//		float x,y;
-//		me->GetBornPos(x,y);
-//		float distance =  0.0f;
-//		TargetMap::iterator iter = m_targetMap.begin();
-//		while(iter != m_targetMap.end())
-//		{
-//			threater = me->GetMap()->FindUnit(iter->first);
-//			if (!threater )
-//			{
+	protected void updateThreadMap(SceneCreature self) {
+		List<Integer> removedKey = new LinkedList<>();
+		
+		SceneElement target = self.getTarget();
+		boolean inActionSight = self.isInActionSight(this.actionRadius);
+		for (Entry<Integer, ThreatValue> info : targetHash.entrySet()) {
+			SceneElement threater = self.getMap().findElement(info.getKey());
+			if (threater == null) {
 //				me->DelOwnerShip(iter->first);
-//				iter = m_targetMap.erase(iter);
-//				continue;
-//			}
-//			if(	threater->isAlive() &&
-//				threater->GetDistance(x,y) < actionradius)
-//			{						
-//				distance = me->GetDistance(threater);
-//				if(distance < visionradius)
-//					iter->second.second = getThreat(distance);
-//				else 
-//					iter->second.second = 0;
-//				++iter;
-//				continue;
-//			}
-//			m_targetMap.erase(iter++);
-//			threater->DelAttacker(me->GetUIntGuid());
-//			if (threater->GetTypeId() == TYPEID_PLAYER)
+				removedKey.add(info.getKey());
+				continue;
+			}
+			
+			if (threater.isAlive() && inActionSight) {
+				if (self.isInSight(threater, this.visionRadius)) {
+					float dist = (float) self.getDistance(threater);
+					info.getValue().setDistantHatred(this.getThreatDistanceHatred(dist));
+				} else {
+					info.getValue().setDistantHatred(0);
+				}
+				continue;
+			}
+			
+			removedKey.add(info.getKey());
+			threater.delAttackTarget(info.getKey());
+			if (threater.getElementType() == SceneElement.ELEMENT_TYPE_PLAYER) {
 //				me->DelOwnerShip(threater->GetUIntGuid());
-//			//TODO:这里可能出现死循环，修改时要注意
-//			if(tagert == threater) me->SetTarget(NULL);
-//		}
-//
+			}
+			if (target == threater) {
+				self.setTarget(null);
+			}
+		}
+		
 //		// 仇恨列表里面没有目标
 //		if (m_targetMap.size() == 0) {
 //			string prev = me->GetStr(UNIT_STRING_FIELD_DROP_OWNER_GUID);

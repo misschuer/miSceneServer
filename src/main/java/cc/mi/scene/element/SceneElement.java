@@ -457,6 +457,11 @@ public abstract class SceneElement extends BinlogData implements Tick {
 		return 100;
 	}
 	
+	// 是否有真视视野
+	protected boolean hasRealSight() {
+		return true;
+	}
+	
 	public double getDistance(SceneElement target) {
 		return Math.sqrt(Math.pow(this.positionX - target.positionX, 2) + Math.pow(this.positionY - target.positionY, 2));
 	}

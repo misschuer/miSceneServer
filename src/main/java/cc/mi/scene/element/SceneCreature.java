@@ -3,8 +3,10 @@ package cc.mi.scene.element;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import cc.mi.core.constance.MovementType;
 import cc.mi.core.gameData.TableCreature;
 import cc.mi.scene.manager.ThreatManager;
+import cc.mi.scene.movement.IdleMovement;
 import cc.mi.scene.movement.MovementBase;
 import cc.mi.scene.movement.MovementFactory;
 
@@ -13,6 +15,8 @@ public class SceneCreature extends SceneElement {
 	private float bornX;
 	private float bornY;
 	
+	// 反应类型
+	private int reactType;
 	// 移动类型
 	private int moveType;
 	// 复活类型
@@ -78,6 +82,8 @@ public class SceneCreature extends SceneElement {
 			return false;
 		}
 		
+		this.setMoveType(TableCreature.INSTANCE.getMoveType(entry));
+		this.setReactType(TableCreature.INSTANCE.getReactType(entry));
 		// 设置属性
 		
 		// name 等
@@ -108,31 +114,35 @@ public class SceneCreature extends SceneElement {
 		threat.init(visionRadius, actionRadius);
 	}
 	
-//	//走向目标
-//	void Creature::MotionMoveTarget()
-//	{
-//		MovementGenerator *curr = NULL;
-//
-//		//如果栈顶已经是朝目标走,或者是idle(用于占位)
-//		if((m_impl.top()->GetMovementGeneratorType() == m_threat_move_type) 
-//			|| (m_impl.top()->GetMovementGeneratorType() == IDLE_MOTION_TYPE 
-//				&& static_cast<IdleMovementGenerator*>(m_impl.top())->m_timer.GetInterval()>0))
-//			return;
-//
-//		//如果生物的行动栈中是初始化的，那么先插入一个回家的
-//		if(m_impl.size() == 1)
-//		{
-//			curr = Tea::SelectMovementGenerator(this,HOME_MOTION_TYPE);
-//			curr->Initialize(*this);
-//			m_impl.push(curr);
-//		}
-//
-//		//向目标寻路追杀
-//		curr = Tea::SelectMovementGenerator(this,MovementGeneratorType(m_threat_move_type));
-//		//curr = Tea::SelectMovementGenerator(this,TARGET_MOTION_TYPE);
-//		curr->Initialize(*this);	
-//		m_impl.push(curr);
-//	}
+	private boolean isInTimerIdle() {
+		if (movementList.peek().getMovementType() != MovementType.IDLE) {
+			return false;
+		}
+		IdleMovement curr = (IdleMovement)movementList.peek();
+		return !curr.isInfiniteTimer();
+	}
+	
+	//走向目标
+	public void moveToTarget() {
+		MovementBase curr = null;
+
+		//如果栈顶已经是朝目标走,或者是idle(用于占位)
+		if (movementList.peek().getMovementType() == this.getMoveType() || this.isInTimerIdle()) {
+			return;
+		}
+
+		//如果生物的行动栈中是初始化的, 那么先插入一个回家的
+		if (movementList.size() == 1) {
+			curr = MovementFactory.getMovement(MovementType.HOME);
+			curr.init(this, 0);
+			movementList.add(curr);
+		}
+
+		//向目标寻路追杀
+		curr = MovementFactory.getMovement(this.getMoveType());
+		curr.init(this, 0);
+		movementList.add(curr);
+	}
 
 	public float getBornX() {
 		return bornX;
@@ -153,6 +163,8 @@ public class SceneCreature extends SceneElement {
 
 	public void setMoveType(int moveType) {
 		this.moveType = moveType;
+//		TODO: 不确定客户端是否需要
+//		this.setUInt8(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO, (short) 1, moveType);
 	}
 
 	public int getRespawnType() {
@@ -198,5 +210,36 @@ public class SceneCreature extends SceneElement {
 
 	public void setAttackRange(int attackRange) {
 		this.attackRange = attackRange;
+	}
+
+	public int getReactType() {
+		return reactType;
+	}
+
+	public void setReactType(int reactType) {
+		this.reactType = reactType;
+//		TODO: 不确定客户端是否需要
+//		this.setUInt8(SceneElementEnumFields.ELEMENT_INT_FIELD_ELEMENT_INFO, (short) 2, reactType);
+	}
+	
+	public boolean isInActionSight(float radius) {
+		return this.getDistance(this.bornX, this.bornY) <= radius;
+	}
+	
+	public boolean isInSight(SceneElement element, float radius) {
+		return this.getDistance(element.positionX, element.positionY) <= radius && this.hasRealSight();
+	}
+	
+	public boolean backHomeIfEnabled() {
+        if (this.bornX != this.positionX || this.bornY != this.positionY) {
+            this.moveTo(this.bornX, this.bornY);
+            return true;
+        }
+        
+        return false;
+	}
+	
+	public boolean moveInSight(SceneElement target) {
+		return true;
 	}
 }

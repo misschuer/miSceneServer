@@ -17,10 +17,14 @@ public class IdleMovement extends MovementBase {
 		this.timer = new TimerInterval(params1);
 		this.timer.reset();
 	}
+	
+	public boolean isInfiniteTimer() {
+		return timer.getInterval() == 0;
+	}
 
 	@Override
 	public boolean update(SceneCreature creature, int diff) {
-		if (timer.getInterval() == 0) {
+		if (!this.isInfiniteTimer()) {
 			return true;
 		}
 		

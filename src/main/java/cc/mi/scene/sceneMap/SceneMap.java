@@ -41,7 +41,6 @@ public class SceneMap implements Tick {
 	
 	static final Map<Integer, Map<Integer, SceneMap>> mapInstHash = new HashMap<>();
 	
-	private Map<String, ScenePlayer> playerHash = new HashMap<>();
 	
 	protected ParentMapInfo mapInfo;
 	protected SceneMap parentInst;
@@ -62,6 +61,9 @@ public class SceneMap implements Tick {
 	// 是否关闭复活
 	protected boolean isCloseRespawnMap = false;
 	
+	private final Map<Integer, SceneElement> elementHash = new HashMap<>();
+	
+	private final Map<String, ScenePlayer> playerHash = new HashMap<>();
 	// 场景对象字典
 	private final Map<String, SceneGameObject> gameObjectMap = new HashMap<>();	
 	// 怪物对象
@@ -140,10 +142,6 @@ public class SceneMap implements Tick {
 //		protected boolean isCloseRespawnMap = false;
 	}
 	
-	public String createUnitBinlogId() {
-		return GuidManager.INSTANCE.makeNewGuid(ObjectType.UNIT);
-	}
-	
 	private boolean load() {
 		final SceneMap self = this;
 		//初始化地图坐标的使用状态
@@ -183,7 +181,7 @@ public class SceneMap implements Tick {
 			@Override
 			public void invoke(MapTeleport value) {
 				SceneTeleport tele = new SceneTeleport(value.getToX(), value.getToY(), value.getToMapId(), value.getToName());
-				if (tele.create(self.createUnitBinlogId(), value.getTemplateId())) {
+				if (tele.create(SceneMap.newSceneElementId(), value.getTemplateId())) {
 					tele.setMap(self);
 					tele.setInstanceId(self.instId);
 					tele.setPosition(value.getX(), value.getY());
@@ -213,7 +211,7 @@ public class SceneMap implements Tick {
 			@Override
 			public void invoke(MapGameobject value) {
 				SceneGameObject sgo = new SceneGameObject();
-				if (sgo.create(self.createUnitBinlogId(), value.getTemplateid())) {
+				if (sgo.create(SceneMap.newSceneElementId(), value.getTemplateid())) {
 					sgo.setPosition(value.getX(), value.getY());
 					sgo.setOrient(value.getToward());
 					self.addGameObject(sgo);
@@ -299,7 +297,7 @@ public class SceneMap implements Tick {
 		this.sendCreateBlock(player.getContextPlayer());
 		this.gridManager.addPlayer(player);
 		
-		playerHash.put(player.getGuid(), player);
+		this.onAddPlayer(player);
 
 		if (player.getInstanceId() != this.instId) {
 			throw new RuntimeException(String.format("joinPlayer err instId"));
@@ -334,7 +332,7 @@ public class SceneMap implements Tick {
 		}
 
 		this.gridManager.addWorldObject(sgo);
-		this.gameObjectMap.put(sgo.getGuid(), sgo);
+		this.onAddGameObject(sgo);
 	}
 
 //
@@ -411,7 +409,7 @@ public class SceneMap implements Tick {
 		
 		SceneCreature creature = new SceneCreature();
 		
-		if (!creature.create(this.createUnitBinlogId(), entry)) {
+		if (!creature.create(SceneMap.newSceneElementId(), entry)) {
 			return null;
 		}
 		
@@ -518,6 +516,21 @@ public class SceneMap implements Tick {
 //		ScenedContext* session = dynamic_cast<ScenedContext*>(ObjMgr.Get(guid));	
 //		return session?session->GetPlayer():nullptr;
 //	}
+	
+	private void addElement(int id, SceneElement element) {
+		this.elementHash.put(id, element);
+	}
+	
+	private void removeElement(int id) {
+		this.elementHash.remove(id);
+	}
+	
+	public SceneElement findElement(int id) {
+		if (this.elementHash.containsKey(id)) {
+			return this.elementHash.get(id);
+		}
+		return null;
+	}
 
 	public void leavePlayer(ScenePlayer player) {
 		//当玩家离开地图时,如果有宠物 应该也要触发一下事件
@@ -533,7 +546,8 @@ public class SceneMap implements Tick {
 		}
 		
 		//移除
-		playerHash.remove(player.getGuid());
+		this.onRemovePlayer(player);
+		
 //		player->SyncUnitToPlayerData();
 		if (player.getContextPlayer() != null) {
 			this.sendDeleteBlock(player.getContextPlayer());
@@ -574,7 +588,7 @@ public class SceneMap implements Tick {
 		if(creature.getGrid() != null) {
 			this.gridManager.delWorldObject(creature);
 		}
-		this.creatureMap.remove(creature.getGuid());
+		this.onRemoveCreature(creature);
 	}
 
 //	//初始化场次id和跨服id
@@ -1102,7 +1116,7 @@ public class SceneMap implements Tick {
 				element.setInstanceId(this.instId);
 				
 				if (element.isCreature()) {
-					this.creatureMap.put(element.getGuid(), (SceneCreature) element);
+					this.onAddCreature((SceneCreature) element);
 				}
 				this.gridManager.addWorldObject(element);
 			}
@@ -1140,4 +1154,41 @@ public class SceneMap implements Tick {
 //			else ++it;		
 //		}
 	}
+	
+	private void onAddPlayer(ScenePlayer element) {
+		this.playerHash.put(element.getGuid(), element);
+		// 加入到公共的hash中
+		this.addElement(element.getUintId(), element);
+	}
+	
+	private void onRemovePlayer(ScenePlayer element) {
+		this.playerHash.remove(element.getGuid());
+		this.removeElement(element.getUintId());
+	}
+	
+	private void onAddCreature(SceneCreature element) {
+		this.creatureMap.put(element.getGuid(), element);
+		// 加入到公共的hash中
+		this.addElement(element.getUintId(), element);
+	}
+	
+	private void onRemoveCreature(SceneCreature element) {
+		this.creatureMap.remove(element.getGuid());
+		this.removeElement(element.getUintId());
+	}
+	
+	private void onAddGameObject(SceneGameObject element) {
+		this.gameObjectMap.put(element.getGuid(), element);
+		// 加入到公共的hash中
+		this.addElement(element.getUintId(), element);
+	}
+	
+	/**
+	 * 可能没用
+	 * @param element
+	 */
+//	private void onRemoveGameObject(SceneGameObject element) {
+//		this.gameObjectMap.remove(element.getGuid());
+//		this.removeElement(element.getUintId());
+//	}
 }
