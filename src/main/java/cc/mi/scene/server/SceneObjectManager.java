@@ -2,6 +2,7 @@ package cc.mi.scene.server;
 
 import cc.mi.core.binlog.data.BinlogData;
 import cc.mi.core.constance.IdentityConst;
+import cc.mi.core.packet.Packet;
 import cc.mi.core.server.GuidManager;
 import cc.mi.core.server.ServerObjectManager;
 
@@ -20,6 +21,9 @@ public class SceneObjectManager extends ServerObjectManager {
 	}
 	
 	public boolean update(int diff) {
-		return false;
+		Packet packet = this.getUpdatePacket();
+		if (packet != null)
+			SceneServerManager.getInstance().sendToCenter(packet);
+		return true;
 	}
 }
