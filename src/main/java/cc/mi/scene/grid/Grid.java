@@ -6,8 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import cc.mi.core.callback.AbstractCallback;
-import cc.mi.core.callback.Callback;
+import cc.mi.core.callback.InvokeCallback;
 import cc.mi.core.generate.msg.UnitBinlogDataModify;
 import cc.mi.core.generate.stru.SceneElementJumpInfo;
 import cc.mi.core.generate.stru.SceneElementMoveInfo;
@@ -77,7 +76,7 @@ public class Grid {
 		this.noticeGrid = new ArrayList<>(9);
 	}
 
-	private void foreachElementAndInvokeCllback(Callback<SceneElement> callback) {
+	private void foreachElementAndInvokeCllback(InvokeCallback<SceneElement> callback) {
 		for (SceneElement element : players.values()) {
 			callback.invoke(element);
 		}
@@ -97,7 +96,7 @@ public class Grid {
 	public void objectAccess() {
 
 		Grid self = this;
-		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+		InvokeCallback<SceneElement> callback = new InvokeCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
 //				if(wo->GetTypeId() == TYPEID_PLAYER)
@@ -179,7 +178,7 @@ public class Grid {
 	}
 	
 	public void getCreateBlockForNewPlayer(final List<UnitBinlogInfo> infoList, GridManager gridManader) {
-		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+		InvokeCallback<SceneElement> callback = new InvokeCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
 				UnitBinlogInfo unitBinlogInfo = element.packNewElementBinlogInfo(
@@ -205,7 +204,7 @@ public class Grid {
 	}
 	
 	public void getOutAreaBlockForPlayer(final List<UnitBinlogInfo> infoList) {
-		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+		InvokeCallback<SceneElement> callback = new InvokeCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
 				infoList.add(element.packRemoveElementBinlogInfo());

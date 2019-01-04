@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import cc.mi.core.callback.AbstractCallback;
-import cc.mi.core.callback.Callback;
+import cc.mi.core.callback.InvokeCallback;
 import cc.mi.core.constance.SceneElementEnumFields;
 import cc.mi.core.generate.msg.UnitBinlogDataModify;
 import cc.mi.core.generate.stru.UnitBinlogInfo;
@@ -137,7 +136,7 @@ public final class GridManager implements Tick {
 		}
 		
 		final List<SceneElement> needRefreshElement = new LinkedList<>();
-		Callback<SceneElement> callback = new AbstractCallback<SceneElement>() {
+		InvokeCallback<SceneElement> callback = new InvokeCallback<SceneElement>() {
 			@Override
 			public void invoke(SceneElement element) {
 				element.update(diff);

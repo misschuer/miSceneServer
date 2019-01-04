@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import cc.mi.core.callback.AbstractCallback;
+import cc.mi.core.callback.InvokeCallback;
 import cc.mi.core.constance.ObjectType;
 import cc.mi.core.gameData.TableMap;
 import cc.mi.core.generate.msg.MapCreateMsg;
@@ -177,7 +177,7 @@ public class SceneMap implements Tick {
 		}
 		
 		// 刷传送点
-		this.mapTemplate.foreachTeleport(new AbstractCallback<MapTeleport>() {
+		this.mapTemplate.foreachTeleport(new InvokeCallback<MapTeleport>() {
 			@Override
 			public void invoke(MapTeleport value) {
 				SceneTeleport tele = new SceneTeleport(value.getToX(), value.getToY(), value.getToMapId(), value.getToName());
@@ -192,7 +192,7 @@ public class SceneMap implements Tick {
 		});
 		
 		//刷怪
-		this.mapTemplate.foreachMonster(new AbstractCallback<MapMonster>() {
+		this.mapTemplate.foreachMonster(new InvokeCallback<MapMonster>() {
 			@Override
 			public void invoke(MapMonster value) {
 				self.newCreature(
@@ -207,7 +207,7 @@ public class SceneMap implements Tick {
 		});
 		
 		//刷游戏对象
-		this.mapTemplate.foreachGameObject(new AbstractCallback<MapGameobject>() {
+		this.mapTemplate.foreachGameObject(new InvokeCallback<MapGameobject>() {
 			@Override
 			public void invoke(MapGameobject value) {
 				SceneGameObject sgo = new SceneGameObject();

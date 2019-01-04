@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import cc.mi.core.callback.AbstractCallback;
-import cc.mi.core.callback.Callback;
+import cc.mi.core.callback.InvokeCallback;
 import cc.mi.core.constance.IdentityConst;
 import cc.mi.core.constance.ObjectType;
 import cc.mi.core.generate.Opcodes;
@@ -81,7 +80,7 @@ public class SceneServerManager extends ServerManager {
 		logger.devLog("do init");
 		this.addTagWatchAndCall(ObjectType.FACTION_BINLOG_OWNER_STRING);
 		this.addTagWatchAndCall(ObjectType.GROUP_BINLOG_OWNER_STRING);
-		this.addTagWatchAndCall(ObjectType.GLOBAL_VALUE_OWNER_STRING, new AbstractCallback<Void>() {
+		this.addTagWatchAndCall(ObjectType.GLOBAL_VALUE_OWNER_STRING, new InvokeCallback<Void>() {
 			@Override
 			public void invoke(Void value) {
 				instance.onDataReady();
@@ -105,7 +104,7 @@ public class SceneServerManager extends ServerManager {
 		this.startReady();
 	}
 	
-	protected void addTagWatchCallback(String ownerTag, Callback<Void> callback) {
+	protected void addTagWatchCallback(String ownerTag, InvokeCallback<Void> callback) {
 		SceneObjectManager.INSTANCE.addOwnerCreateCallback(ownerTag, callback);
 	}
 	
