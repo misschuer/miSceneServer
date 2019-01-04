@@ -9,13 +9,18 @@ import org.ini4j.Profile.Section;
 import cc.mi.core.constance.NetConst;
 
 public class ServerConfig {
+	private static final String ATTRIBUTE = "attribute";
 	private static final String CENTER = "center";
 	private static final String GATE = "gate";
+	
+	public static final String IS_NORMAL_SERVER = "isNormalServer";
 	
 	private static String center_ip;
 	private static int center_port;
 	private static String gate_ip;
 	private static int gate_port;
+	
+	private static boolean normalServer = true;
 	
 	public static final int LOOT_AREA = 1;
 	
@@ -28,6 +33,9 @@ public class ServerConfig {
         	// 加载配置文件  
         	ini.load(url);
 
+        	Section section = ini.get(ATTRIBUTE);
+        	normalServer = "TRUE".equals(section.get(IS_NORMAL_SERVER));
+        	
         	Section section2 = ini.get(CENTER);
         	center_ip = section2.get(NetConst.IP);
         	center_port = Integer.parseInt(section2.get(NetConst.PORT));
@@ -56,5 +64,10 @@ public class ServerConfig {
 	
 	public static int getGatePort() {
 		return gate_port;
+	}
+
+
+	public static boolean isNormalServer() {
+		return normalServer;
 	}
 }
