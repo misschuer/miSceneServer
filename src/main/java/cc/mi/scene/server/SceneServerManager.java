@@ -109,6 +109,11 @@ public class SceneServerManager extends ServerManager {
 	}
 	
 	private void doUpdate(int diff) {
+//		//地图跳跳
+//		for(auto it = Map::map_instances.begin();it != Map::map_instances.end();++it)
+//			it->second->Update(diff);
+//		Map::UpdateParentInfo();
+		
 		this.updateWaitJoin();
 	}
 	
